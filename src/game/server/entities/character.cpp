@@ -521,7 +521,6 @@ void CCharacter::FireWeapon()
 				Lifetime, //Span
 				false, //Freeze
 				false, //Explosive
-				0, //Force
 				-1 //SoundImpact
 			);
 
@@ -560,7 +559,6 @@ void CCharacter::FireWeapon()
 			Lifetime, //Span
 			false, //Freeze
 			true, //Explosive
-			0, //Force
 			SOUND_GRENADE_EXPLODE //SoundImpact
 		); //SoundImpact
 
@@ -1030,7 +1028,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			AmmoCount = (!m_FreezeTime) ? m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo : 0;
 	}
 
-	if(GetPlayer()->m_Afk || GetPlayer()->IsPaused())
+	if(GetPlayer()->IsAfk() || GetPlayer()->IsPaused())
 	{
 		if(m_FreezeTime > 0 || m_FreezeTime == -1 || m_Core.m_DeepFrozen || m_Core.m_LiveFrozen)
 			Emote = EMOTE_NORMAL;
