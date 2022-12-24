@@ -53,6 +53,7 @@
 #include "components/statboard.h"
 #include "components/tooltips.h"
 #include "components/voting.h"
+#include "components/windows.h"
 
 class CGameInfo
 {
@@ -119,6 +120,7 @@ public:
 	CBinds m_Binds;
 	CParticles m_Particles;
 	CMenus m_Menus;
+	CWindowController m_Windows;
 	CSkins m_Skins;
 	CCountryFlags m_CountryFlags;
 	CFlow m_Flow;

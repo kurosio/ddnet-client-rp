@@ -15,6 +15,7 @@
 
 #include <limits>
 
+
 void CUIElement::Init(CUI *pUI, int RequestedRectCount)
 {
 	m_pUI = pUI;
@@ -91,6 +92,9 @@ ITextRender *CUIElementBase::TextRender() const { return s_pUI->TextRender(); }
 
 void CUI::Init(IKernel *pKernel)
 {
+	m_pCheckedWindow = nullptr;
+	m_pHoveredWindow = nullptr;
+
 	m_pClient = pKernel->RequestInterface<IClient>();
 	m_pGraphics = pKernel->RequestInterface<IGraphics>();
 	m_pInput = pKernel->RequestInterface<IInput>();
@@ -218,6 +222,28 @@ void CUI::Update(float MouseX, float MouseY, float MouseWorldX, float MouseWorld
 bool CUI::MouseInside(const CUIRect *pRect) const
 {
 	return pRect->Inside(m_MouseX, m_MouseY);
+}
+
+bool CUI::MouseHovered(const CUIRect *pRect) const
+{
+	if(m_pHoveredWindow && m_pCheckedWindow && m_pCheckedWindow == m_pHoveredWindow && MouseInside(&m_pHoveredWindow->m_WindowRect))
+		return MouseInside(pRect) && MouseInsideClip();
+
+	// this logic ignores all MouseHovered excluding its area and available area.
+	// So that each window is unique and clicks or selections don't look weird
+	// teeworlds does not haved ui render for stages
+	if(!m_pCheckedWindow)
+	{
+		for(auto &p : CWindowUI::ms_aWindows)
+		{
+			if(p->IsRenderAllowed() && MouseInside(&p->m_WindowRect))
+				return false;
+		}
+
+		return MouseInside(pRect) && MouseInsideClip();
+	}
+
+	return false;
 }
 
 void CUI::ConvertMouseMove(float *pX, float *pY, IInput::ECursorType CursorType) const
@@ -1317,4 +1343,111 @@ void CUI::DoScrollbarOptionLabeled(const void *pID, int *pOption, const CUIRect 
 		Value = (Value + 1) % NumLabels;
 
 	*pOption = clamp(Value, 0, Max);
+}
+
+// rect limiter for bordour
+void CUI::MouseRectLimitMapScreen(CUIRect *pRect, float Indent, int LimitRectFlag)
+{
+	const float MaxWidth = Screen()->w;
+	const float MaxHeight = Screen()->h;
+	const float SpaceWidthX = Screen()->w / 24.f;
+	const float SpaceHeightY = Screen()->h / 24.f;
+
+	pRect->x = MouseX();
+	if(pRect->x < MaxWidth / 2.0f)
+	{
+		pRect->x -= pRect->w + Indent;
+		if(LimitRectFlag & RECTLIMITSCREEN_ALIGN_CENTER_X)
+			pRect->x += pRect->w / 2.0f;
+		if((pRect->x - SpaceWidthX) < Screen()->x)
+			pRect->x = Indent + SpaceWidthX;
+	}
+	else
+	{
+		if(LimitRectFlag & RECTLIMITSCREEN_ALIGN_CENTER_X)
+			pRect->x -= pRect->w / 2.0f;
+		if((pRect->x + (pRect->w + SpaceWidthX)) > MaxWidth)
+			pRect->x = (MaxWidth - pRect->w) - (Indent + SpaceWidthX);
+	}
+
+	pRect->y = MouseY();
+	if((pRect->y < MaxHeight / 2.0f && LimitRectFlag & RECTLIMITSCREEN_DOWN) || LimitRectFlag == RECTLIMITSCREEN_ALL)
+	{
+		if(LimitRectFlag & RECTLIMITSCREEN_SKIP_BORDURE_DOWN)
+			pRect->y += Indent;
+		else if((pRect->y + (pRect->h + SpaceHeightY)) > MaxHeight)
+			pRect->y = (MaxHeight - pRect->h) - (Indent + SpaceHeightY);
+	}
+	else if(LimitRectFlag & RECTLIMITSCREEN_UP || LimitRectFlag == RECTLIMITSCREEN_ALL)
+	{
+		if(LimitRectFlag & RECTLIMITSCREEN_SKIP_BORDURE_UP)
+			pRect->y -= pRect->h + Indent;
+		else
+		{
+			pRect->y -= pRect->h + Indent;
+			if((pRect->y - SpaceHeightY) < Screen()->y)
+				pRect->y = Indent + SpaceHeightY;
+		}
+	}
+}
+
+// anim fades
+bool operator==(const CUIRect *lhs, const CUIRect &rhs)
+{
+	return round_to_int(lhs->x) == round_to_int(rhs.x) && round_to_int(lhs->y) == round_to_int(rhs.y)
+		&& round_to_int(lhs->w) == round_to_int(rhs.w) && round_to_int(lhs->h) == round_to_int(rhs.h);
+}
+
+float CUI::GetFade(CUIRect *pRect, bool Checked, float Seconds)
+{
+	const bool Hovered = MouseHovered(pRect);
+	m_AnimFades.erase(std::remove_if(m_AnimFades.begin(), m_AnimFades.end(), [&](const AnimFade &pFade) 
+	{ return (pFade.m_StartTime + pFade.m_Seconds) < m_pClient->LocalTime(); }), m_AnimFades.end());
+	auto pItem = std::find_if(m_AnimFades.begin(), m_AnimFades.end(), [&pRect](const AnimFade &pFade) 
+	{
+		return pRect == pFade.m_Rect;
+	});
+
+	if(Hovered || Checked)
+	{
+		if(pItem != m_AnimFades.end())
+		{
+			pItem->m_StartTime = m_pClient->LocalTime();
+			pItem->m_Seconds = Seconds;
+		}
+		else
+		{
+			AnimFade Fade{};
+			Fade.m_Rect = *pRect;
+			Fade.m_StartTime = m_pClient->LocalTime();
+			Fade.m_Seconds = Seconds;
+			m_AnimFades.push_back(Fade);
+		}
+
+		return 1.0f;
+	}
+
+	if(pItem != m_AnimFades.end())
+	{
+		float Progression = maximum(0.0f, pItem->m_StartTime - m_pClient->LocalTime() + pItem->m_Seconds) / pItem->m_Seconds;
+		return Progression;
+	}
+
+	return 0.0f;
+}
+
+// window system
+CWindowUI *CUI::CreateWindow(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence, int WindowFlags)
+{
+	CWindowUI *pWindow = GetWindow(pWindowName);
+	if(pWindow)
+		return pWindow;
+
+	pWindow = CWindowUI::ms_aWindows.emplace_back(new CWindowUI(pWindowName, WindowSize, pRenderDependence, WindowFlags));
+	return pWindow;
+}
+
+CWindowUI *CUI::GetWindow(const char *pWindowName) const
+{
+	return CWindowUI::SearchWindowByKeyName(CWindowUI::ms_aWindows, pWindowName);
 }

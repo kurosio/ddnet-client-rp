@@ -36,6 +36,8 @@
 #include "countryflags.h"
 #include "menus.h"
 
+#include <game/client/ui_window.h>
+
 using namespace std::chrono_literals;
 
 ColorRGBA CMenus::ms_GuiColor;
@@ -2408,7 +2410,6 @@ void CMenus::OnRender()
 
 	if(!IsActive())
 	{
-		UI()->FinishCheck();
 		UI()->ClearHotkeys();
 		m_NumInputEvents = 0;
 		return;
@@ -2460,9 +2461,38 @@ void CMenus::OnRender()
 		TextRender()->TextEx(&Cursor, aBuf, -1);
 	}
 
-	UI()->FinishCheck();
+	/*
+	 * TEST WINDOWS SYSTEM FOR SOME TIME
+	 */
+	if(CWindowUI *pPiskaWin = UI()->GetWindow("Piska1"); !pPiskaWin)
+	{
+		// create window
+		pPiskaWin = UI()->CreateWindow("Piska1", vec2(200, 200));
+
+		// register callback
+		pPiskaWin->Register([this](CUIRect MainView, CWindowUI *pWindow) 
+		{
+			CUIRect Button{};
+			MainView.HSplitTop(24.0f, &Button, &MainView);
+
+			static int CheckBoxTest = 0;
+			if(CWindowUI *pChild = pWindow->GetChild("Child"); DoButton_CheckBox(&CheckBoxTest, "Test open Child window", pChild->IsOpenned(), &Button))
+				pChild->Reverse();
+		});
+
+		// create child and register callback render
+		pPiskaWin->AddChild("Child", vec2(300, 100))->Register([this](CUIRect MainView, CWindowUI *pWindow) 
+		{
+			UI()->DoLabel(&MainView, "SDkosad kosakdo askdo sak", 12.0f, TEXTALIGN_CENTER);
+		});
+
+		// open window
+		pPiskaWin->Open();
+	}
+
 	UI()->ClearHotkeys();
 	m_NumInputEvents = 0;
+
 }
 
 void CMenus::RenderBackground()

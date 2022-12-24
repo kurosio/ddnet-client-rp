@@ -68,6 +68,7 @@
 #include "components/spectator.h"
 #include "components/statboard.h"
 #include "components/voting.h"
+#include "components/windows.h"
 #include "prediction/entities/character.h"
 #include "prediction/entities/projectile.h"
 
@@ -140,7 +141,9 @@ void CGameClient::OnConsoleInit()
 					      &m_Scoreboard,
 					      &m_Statboard,
 					      &m_Motd,
-					      &m_Menus,
+					      &m_Menus, // here starting ui checking
+							// here ui or gui elements also we can use inside m_Menus
+					      &m_Windows, // here ending ui checking
 					      &m_Tooltips,
 					      &CMenus::m_Binder,
 					      &m_GameConsole,
@@ -230,6 +233,7 @@ void CGameClient::OnInit()
 	// propagate pointers
 	m_UI.Init(Kernel());
 	m_RenderTools.Init(Graphics(), TextRender());
+	CWindowUI::InitComponents(UI(), RenderTools());
 
 	int64_t Start = time_get();
 

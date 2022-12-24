@@ -2246,6 +2246,8 @@ if(CLIENT)
     components/tooltips.h
     components/voting.cpp
     components/voting.h
+    components/windows.cpp
+    components/windows.h
     gameclient.cpp
     gameclient.h
     laser_data.cpp
@@ -2278,6 +2280,8 @@ if(CLIENT)
     ui_rect.h
     ui_scrollregion.cpp
     ui_scrollregion.h
+    ui_window.cpp
+    ui_window.h
   )
   set_src(GAME_EDITOR GLOB src/game/editor
     auto_map.cpp
