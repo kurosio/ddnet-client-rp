@@ -238,7 +238,7 @@ CWindowUI * CWindowUI::GetChild(const char *pChildName)
 
 void CWindowUI::GetFullChildWindowName(const char *pChildName, char *aBuf, int Size)
 {
-	str_format(aBuf, Size, "%s : %s", m_aName, pChildName);
+	str_format(aBuf, Size, "%s - %s", m_aName, pChildName);
 }
 
 bool CWindowUI::operator==(const CWindowUI &p) const
@@ -250,8 +250,6 @@ void CWindowUI::InitComponents(CUI *pUI, CRenderTools *pRenderTools)
 {
 	m_pUI = pUI;
 	m_pRenderTools = pRenderTools;
-	if(!ms_pWindowHelper)
-		ms_pWindowHelper = m_pUI->CreateWindow("Help", vec2(0, 0), nullptr, WINDOWFLAG_CLOSE);
 }
 
 void CWindowUI::MinimizeWindow()

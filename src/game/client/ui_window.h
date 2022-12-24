@@ -19,7 +19,6 @@ class CWindowUI
 	inline static std::vector<CWindowUI *> ms_aWindows;
 	inline static class CUI *m_pUI;
 	inline static class CRenderTools *m_pRenderTools;
-	inline static CWindowUI *ms_pWindowHelper;
 
 	using RenderWindowCallback = std::function<void(CUIRect, CWindowUI*)>;
 	RenderWindowCallback m_pCallback{};
