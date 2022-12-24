@@ -19,9 +19,12 @@
 
 CWindowController::~CWindowController()
 {
+	for(auto *pElement : m_aElements)
+		delete pElement;
 	for(auto *pWindow : CWindowUI::ms_aWindows)
 		delete pWindow;
 
+	m_aElements.clear();
 	CWindowUI::ms_aWindows.clear();
 }
 
@@ -97,7 +100,7 @@ void CWindowController::Update(bool* pCursor) const
 }
 
 /* =====================================================================
- * Window UI Elements											|	  UI
+ * Window UI Elements                                           |     UI
  * ===================================================================== */
 static float s_InformationBoxLabelSpace = 8.0f;
 template<class T, std::enable_if_t<std::is_convertible_v<T *, BaseElemUI *>, bool> = true>
@@ -118,7 +121,7 @@ static void UpdateElement(std::vector<BaseElemUI *> &paElements, T *pElement)
 }
 
 /* =====================================================================
- * Information	Box		|	 GUI
+ * Information	Box                                             |     UI
  * ===================================================================== */
 constexpr float s_MessageBoxFontSize = 10.0f;
 MessageElemUI *CWindowController::CreateInformationBoxElement(float Width, const char *pMessage) const
@@ -172,7 +175,7 @@ void CWindowController::CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pC
 
 
 /* =====================================================================
- * Popup element												|	  UI
+ * Popup element                                                |     UI
  * ===================================================================== */
 constexpr float s_PopupFontSize = 10.0f;
 PopupElemUI *CWindowController::CreatePopupElement(const char *pMessage, PopupWindowCallback Callback) const
