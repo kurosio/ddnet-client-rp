@@ -19,7 +19,7 @@ class CWindowUI
 	friend class CUI;
 	friend class CWindowController;
 
-	static CUI *m_pUI;
+	static class CUI *m_pUI;
 	static class CRenderTools* m_pRenderTools;
 
 	static CWindowUI* ms_pWindowHelper;
