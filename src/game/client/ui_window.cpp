@@ -207,9 +207,9 @@ void CWindowUI::Render()
 
 CWindowUI *CWindowUI::SearchWindowByKeyName(std::vector<CWindowUI *> &pVector, const char *pSearchKeyName)
 {
-	const auto pItem = std::find_if(pVector.begin(), pVector.end(), [pSearchKeyName](const CWindowUI *pItem) 
+	const auto pItem = std::find_if(pVector.begin(), pVector.end(), [pSearchKeyName](const CWindowUI *p) 
 	{
-		return str_comp(pSearchKeyName, pItem->GetWindowName()) == 0;
+		return str_comp(pSearchKeyName, p->GetWindowName()) == 0;
 	});
 	return pItem != pVector.end() ? (*pItem) : nullptr;
 }
@@ -361,9 +361,9 @@ void CWindowUI::SetWorkspace(vec2 WorkspaceSize)
 
 void CWindowUI::SetActiveWindow(CWindowUI *pWindow)
 {
-	const auto pItem = std::find_if(ms_aWindows.begin(), ms_aWindows.end(), [pWindow](const CWindowUI* pItem)
+	const auto pItem = std::find_if(ms_aWindows.begin(), ms_aWindows.end(), [pWindow](const CWindowUI* p)
 	{
-		return pWindow == pItem;
+		return pWindow == p;
 	});
 	std::rotate(ms_aWindows.begin(), pItem, pItem + 1);
 }
