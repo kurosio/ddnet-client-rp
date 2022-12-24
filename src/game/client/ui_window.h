@@ -29,8 +29,8 @@ class CWindowUI
 	vec4 m_ColorTone{};
 	char m_aName[128]{};
 	CUIRect m_MainRect{};
-	CUIRect m_Bordure{};
-	CUIRect m_RectReserve{};
+	CUIRect m_BordureRect{};
+	CUIRect m_ReserveRect{};
 	CUIRect m_DefaultRect{};
 	bool *m_pRenderDependence{};
 	std::vector<CWindowUI *> m_paChildrens;

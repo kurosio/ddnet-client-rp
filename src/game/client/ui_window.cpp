@@ -41,8 +41,8 @@ void CWindowUI::RenderDefaultWindow()
 	static float s_WindowSkipMovingY;
 	if(m_Moving)
 	{
-		m_MainRect.x = m_Bordure.x = clamp(m_pUI->MouseX() - s_WindowSkipMovingX, 0.0f, m_pUI->Screen()->w - m_MainRect.w);
-		m_MainRect.y = m_Bordure.y = clamp(m_pUI->MouseY() - s_WindowSkipMovingY, 0.0f, m_pUI->Screen()->h - m_MainRect.h);
+		m_MainRect.x = m_BordureRect.x = clamp(m_pUI->MouseX() - s_WindowSkipMovingX, 0.0f, m_pUI->Screen()->w - m_MainRect.w);
+		m_MainRect.y = m_BordureRect.y = clamp(m_pUI->MouseY() - s_WindowSkipMovingY, 0.0f, m_pUI->Screen()->h - m_MainRect.h);
 		if(!m_pUI->Input()->KeyIsPressed(KEY_MOUSE_1))
 		{
 			m_Moving = false;
@@ -62,7 +62,7 @@ void CWindowUI::RenderDefaultWindow()
 	 * Set bordure rect
 	 */
 	CUIRect Workspace{};
-	m_MainRect.HSplitTop(BordureWidth, &m_Bordure, &Workspace);
+	m_MainRect.HSplitTop(BordureWidth, &m_BordureRect, &Workspace);
 
 	/*
 	 * Background draw
@@ -85,16 +85,16 @@ void CWindowUI::RenderDefaultWindow()
 	 * Bordure draw
 	 */
 	{
-		const float BordureFade = m_pUI->GetFade(&m_Bordure, IsActiveWindow);
+		const float BordureFade = m_pUI->GetFade(&m_BordureRect, IsActiveWindow);
 		const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.2f, 0.2f, 0.2f, 0.f), BordureFade);
-		DrawUIRectMonochrome(&m_Bordure, ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
+		DrawUIRectMonochrome(&m_BordureRect, ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
 	}
 
 	/*
 	 * Window name
 	 */
 	CUIRect Label{};
-	m_Bordure.VSplitLeft(10.0f, 0, &Label);
+	m_BordureRect.VSplitLeft(10.0f, 0, &Label);
 	m_pUI->DoLabel(&Label, m_aName, FontSize, TEXTALIGN_LEFT);
 	
 	/*
@@ -147,7 +147,7 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	{
 		CUIRect ButtonTop{};
-		m_Bordure.VSplitRight(24.0f, nullptr, &ButtonTop);
+		m_BordureRect.VSplitRight(24.0f, nullptr, &ButtonTop);
 
 		// close button
 		if(m_Flags & WINDOWFLAG_CLOSE && CreateButtonTop(&ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
@@ -176,7 +176,7 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		m_Moving = false;
 	}
-	else if(m_pUI->Input()->KeyPress(KEY_MOUSE_1) && m_pUI->MouseHovered(&m_Bordure))
+	else if(m_pUI->Input()->KeyPress(KEY_MOUSE_1) && m_pUI->MouseHovered(&m_BordureRect))
 	{
 		m_Moving = true;
 		s_WindowSkipMovingX = (m_pUI->MouseX() - m_MainRect.x);
@@ -259,14 +259,14 @@ void CWindowUI::MinimizeWindow()
 	m_Minimized ^= true;
 	if(m_Minimized)
 	{
-		m_RectReserve = m_MainRect;
-		m_MainRect = m_Bordure;
+		m_ReserveRect = m_MainRect;
+		m_MainRect = m_BordureRect;
 		return;
 	}
 
-	m_RectReserve.x = clamp(m_MainRect.x, 0.0f, m_pUI->Screen()->w - m_RectReserve.w);
-	m_RectReserve.y = clamp(m_MainRect.y, 0.0f, m_pUI->Screen()->h - m_RectReserve.h);
-	m_MainRect = m_RectReserve;
+	m_ReserveRect.x = clamp(m_MainRect.x, 0.0f, m_pUI->Screen()->w - m_ReserveRect.w);
+	m_ReserveRect.y = clamp(m_MainRect.y, 0.0f, m_pUI->Screen()->h - m_ReserveRect.h);
+	m_MainRect = m_ReserveRect;
 }
 
 // - - -- - -- - -- - -- - -- - -- - -
@@ -274,10 +274,10 @@ void CWindowUI::MinimizeWindow()
 void CWindowUI::Init(vec2 WindowSize, bool* pRenderDependence)
 {
 	m_ColorTone = ColorHSLA(g_Config.m_UiWindowColor, true);
-	m_Bordure = { 0, 0, 0, 0 };
+	m_BordureRect = { 0, 0, 0, 0 };
 	m_MainRect = { 0, 0, WindowSize.x, WindowSize.y };
 	m_DefaultRect = m_MainRect;
-	m_RectReserve = m_MainRect;
+	m_ReserveRect = m_MainRect;
 	m_Minimized = false;
 	m_Moving = false;
 	if(pRenderDependence)
@@ -309,7 +309,7 @@ bool CWindowUI::IsActive() const
 
 void CWindowUI::Open()
 {
-	CUIRect NewWindowRect = { 0, 0, m_RectReserve.w, m_RectReserve.h };
+	CUIRect NewWindowRect = { 0, 0, m_ReserveRect.w, m_ReserveRect.h };
 	m_pUI->MouseRectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
 
 	m_MainRect = NewWindowRect;
@@ -356,8 +356,8 @@ void CWindowUI::SetWorkspace(vec2 WorkspaceSize)
 		m_pUI->MouseRectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
 		m_MainRect.w = NewWindowRect.w;
 		m_MainRect.h = NewWindowRect.h;
-		m_RectReserve.w = NewWindowRect.w;
-		m_RectReserve.h = NewWindowRect.h;
+		m_ReserveRect.w = NewWindowRect.w;
+		m_ReserveRect.h = NewWindowRect.h;
 	}
 }
 
