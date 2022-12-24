@@ -44,13 +44,9 @@ class CWindowUI
 	CWindowUI() = default;
 	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = WINDOWFLAG_ALL);
 
-	bool IsRenderAllowed() const { return m_Openned && m_pCallback && (m_pRenderDependence == nullptr || (m_pRenderDependence && *m_pRenderDependence == true)); }
-
 	void RenderWindowWithoutBordure();
 	void RenderDefaultWindow();
 	void Render();
-	
-	static CWindowUI *SearchWindowByKeyName(std::vector<CWindowUI *> &pVector, const char *pSearchKeyName);
 
 public:
 	enum
@@ -220,6 +216,10 @@ public:
 private:
 	static void SetActiveWindow(CWindowUI* pWindow);
 	static CWindowUI* GetActiveWindow();
+	static CWindowUI *SearchWindowByKeyName(std::vector<CWindowUI *> &pVector, const char *pSearchKeyName);
+
+	bool IsRenderAllowed() const { return m_Openned && m_pCallback && (m_pRenderDependence == nullptr || (m_pRenderDependence && *m_pRenderDependence == true)); }
+	bool IsMoving() const { return m_WindowMoving; }
 
 	// tools
 	void DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding);

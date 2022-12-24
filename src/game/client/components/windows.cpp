@@ -46,7 +46,7 @@ void CWindowController::Update(bool* pCursor) const
 {
 	// update hovered the active highlighted area
 	if(auto pHovered = std::find_if(CWindowUI::ms_aWindows.begin(), CWindowUI::ms_aWindows.end(), [this](CWindowUI *p) 
-		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_WindowRect) || p->m_WindowMoving); }); pHovered != CWindowUI::ms_aWindows.end())
+		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_WindowRect) || p->IsMoving()); }); pHovered != CWindowUI::ms_aWindows.end())
 		UI()->SetHoveredWindow(*pHovered);
 
 	// draw in reverse order as they are sorted here
