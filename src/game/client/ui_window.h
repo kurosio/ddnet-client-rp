@@ -9,8 +9,8 @@
 #include <vector>
 
 #define DEFAULT_WORKSPACE_SIZE (-1.f)
-#define DEFAULT_BACKGROUND_WINDOW_SHANDOW vec4(0.4f, 0.4f, 0.4f, 0.95f)
-#define DEFAULT_BACKGROUND_WINDOW_COLOR vec4(0.085f, 0.085f, 0.085f, 0.50f)
+#define DEFAULT_BACKGROUND_WINDOW_SHANDOW ColorHSLA(3306104647, true)
+#define DEFAULT_BACKGROUND_WINDOW_COLOR ColorHSLA(4280956495, true)
 #define WINREGISTER(f, o)  std::bind(f, o, std::placeholders::_1, std::placeholders::_2)
 
 class CWindowUI

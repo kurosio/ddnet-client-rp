@@ -66,24 +66,28 @@ void CWindowUI::RenderDefaultWindow()
 	/*
 	 * Background draw
 	 */
-	CUIRect ShadowBackground{};
-	m_WindowRect.Margin(-1.5f, &ShadowBackground);
-	DrawUIRectMonochrome(&ShadowBackground, ColorRGBA(DEFAULT_BACKGROUND_WINDOW_SHANDOW), IGraphics::CORNER_ALL, Rounding);
-	
 	const bool IsActiveWindow = IsActive();
-	if(!m_WindowMinimize)
 	{
-		const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActiveWindow, 0.4f);
-		const vec4 Color = mix(m_BackgroundColor -= vec4(0.02f, 0.02f, 0.02f, 0.f), m_BackgroundColor, BackgroundFade);
-		DrawUIRect(&Workspace, ColorRGBA(Color), IGraphics::CORNER_ALL, Rounding);
+		CUIRect ShadowBackground{};
+		m_WindowRect.Margin(-1.5f, &ShadowBackground);
+		DrawUIRectMonochrome(&ShadowBackground, m_BackgroundColor / 1.5f, IGraphics::CORNER_ALL, Rounding);
+
+		if(!m_WindowMinimize)
+		{
+			const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActiveWindow, 0.4f);
+			const vec4 Color = mix(m_BackgroundColor, m_BackgroundColor + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
+			DrawUIRect(&Workspace, ColorRGBA(Color), IGraphics::CORNER_ALL, Rounding);
+		}
 	}
 	
 	/*
 	 * Bordure draw
 	 */
-	const float BordureFade = m_pUI->GetFade(&m_WindowBordure, IsActiveWindow);
-	const vec4 Color = mix(vec4(0.2f, 0.2f, 0.2f, 1.0f), vec4(0.4f, 0.4f, 0.4f, 1.0f), BordureFade);
-	DrawUIRectMonochrome(&m_WindowBordure, ColorRGBA(Color), m_WindowMinimize ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
+	{
+		const float BordureFade = m_pUI->GetFade(&m_WindowBordure, IsActiveWindow);
+		const vec4 Color = mix(m_BackgroundColor, m_BackgroundColor + vec4(0.2f, 0.2f, 0.2f, 0.f), BordureFade);
+		DrawUIRectMonochrome(&m_WindowBordure, ColorRGBA(Color), m_WindowMinimize ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
+	}
 
 	/*
 	 * Window name
