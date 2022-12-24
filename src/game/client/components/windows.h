@@ -2,6 +2,8 @@
 #define GAME_CLIENT_COMPONENTS_WINDOWS_H
 #include <game/client/component.h>
 
+#include <vector>
+
 /*
 	UI elements.
 */

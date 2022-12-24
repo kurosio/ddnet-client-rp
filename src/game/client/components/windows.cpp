@@ -1,7 +1,6 @@
+#include <engine/keys.h>
 #include <game/client/ui_rect.h>
 #include "windows.h"
-
-#include <engine/keys.h>
 
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
