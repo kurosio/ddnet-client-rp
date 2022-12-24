@@ -6,6 +6,7 @@
 #include "ui_rect.h"
 
 #include <functional>
+#include <vector>
 
 #define DEFAULT_WORKSPACE_SIZE (-1.f)
 #define DEFAULT_BACKGROUND_WINDOW_SHANDOW vec4(0.4f, 0.4f, 0.4f, 0.95f)
