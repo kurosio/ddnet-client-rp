@@ -62,6 +62,8 @@ public:
 
 class CMenus : public CComponent
 {
+	friend class CWindowController;
+
 	static ColorRGBA ms_GuiColor;
 	static ColorRGBA ms_ColorTabbarInactiveOutgame;
 	static ColorRGBA ms_ColorTabbarActiveOutgame;

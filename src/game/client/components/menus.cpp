@@ -2483,8 +2483,33 @@ void CMenus::OnRender()
 		// create child and register callback render
 		pPiskaWin->AddChild("Child", vec2(300, 100))->Register([this](CUIRect MainView, CWindowUI *pWindow) 
 		{
+			// set color tone
 			pWindow->SetColorTone(ColorHSLA(582533173, true));
+
+			// some render functions
 			UI()->DoLabel(&MainView, "SDkosad kosakdo askdo sak", 12.0f, TEXTALIGN_CENTER);
+
+			CUIRect Button{};
+			MainView.HSplitTop(24.0f, &Button, &MainView);
+
+			static CButtonContainer s_ButtonAccept;
+			Button.VMargin(5.0f, &Button);
+			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Popka test", 0, &Button))
+			{
+				// create popup message after clicked DoButtonMenu and update children
+				m_pClient->m_Windows.CreatePopupBox("Popka4214", 200, "aDKSAodko askdo askfoakpsfokSAOP FKPOASfk aspofkapsofk pasokfpoas kop?", [this](CWindowUI *pPopupWindow, bool ButtonYes) 
+				{
+					if(ButtonYes)
+					{
+						// create information box after clicked Button Yes from popup and update children
+						m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "sa jiofIOA JFIOASJFoi wqjfio qwjfiowqjiofwqjio fiwqjf 9ijiowqej f9012j f9ij2cf 1jf09 12ijfioqwjf oiqwjf iowqjf oiqwjfio wqjfiowqj iofjqwio fjwqiof jqwiof jqiowfj qwoijf iowqjf oiqwjfio qwjfio wqjfoi jwqiof jwqiof joi21j9f j209f jweiofqjqwiofj wqiofj iwqojf ioqwjf iowqjfiowqj fiowqif ", pPopupWindow);
+						return;
+					}
+
+					// close for button NO
+					pPopupWindow->Close();
+				}, pWindow);
+			}
 		});
 
 		// open window
