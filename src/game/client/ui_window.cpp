@@ -10,11 +10,6 @@
 #include "gameclient.h"
 #include "render.h"
 
-CUI* CWindowUI::m_pUI;
-CRenderTools* CWindowUI::m_pRenderTools;
-CWindowUI* CWindowUI::ms_pWindowHelper;
-std::vector<CWindowUI*> CWindowUI::ms_aWindows;
-
 constexpr float s_BackgroundMargin = 2.0f;
 
 // The basic logic
@@ -101,7 +96,7 @@ void CWindowUI::RenderDefaultWindow()
 	 * Button bordure top func
 	 */
 	bool DissalowWindowMoving = false;
-	auto CreateButtonTop = [this, &IsActiveWindow, &FontSize, &Rounding, &DissalowWindowMoving](CUIRect* pButtonRect, const char* pHintStr, vec4 ColorFade1, vec4 ColorFade2, const char* pSymbolUTF) -> bool
+	auto CreateButtonTop = [&](CUIRect* pButtonRect, const char* pHintStr, vec4 ColorFade1, vec4 ColorFade2, const char* pSymbolUTF) -> bool
 	{
 		CUIRect Button = *(pButtonRect);
 		const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));

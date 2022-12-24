@@ -14,15 +14,14 @@
 
 class CWindowUI
 {
-	static std::vector<CWindowUI*> ms_aWindows;
-	std::vector<CWindowUI*> m_paChildrenWindows;
 	friend class CUI;
 	friend class CWindowController;
 
-	static class CUI *m_pUI;
-	static class CRenderTools* m_pRenderTools;
+	inline static std::vector<CWindowUI *> ms_aWindows;
+	inline static class CUI *m_pUI;
+	inline static class CRenderTools *m_pRenderTools;
+	inline static CWindowUI *ms_pWindowHelper;
 
-	static CWindowUI* ms_pWindowHelper;
 	using RenderWindowCallback = std::function<void(CUIRect, CWindowUI*)>;
 	RenderWindowCallback m_pCallback{};
 	RenderWindowCallback m_pCallbackHelp{};
@@ -34,7 +33,8 @@ class CWindowUI
 	CUIRect m_WindowBordure{};
 	CUIRect m_WindowRectReserve{};
 	CUIRect m_DefaultWindowRect{};
-	bool* m_pRenderDependence{};
+	bool *m_pRenderDependence{};
+	std::vector<CWindowUI *> m_paChildrenWindows;
 
 	int m_WindowFlags{};
 	bool m_WindowMinimize{};
@@ -222,7 +222,6 @@ private:
 
 	// tools
 	void DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding);
-
 };
 
 
