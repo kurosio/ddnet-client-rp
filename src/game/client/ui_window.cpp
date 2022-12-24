@@ -371,7 +371,11 @@ void CWindowUI::SetActiveWindow(CWindowUI *pWindow)
 
 CWindowUI* CWindowUI::GetActiveWindow()
 {
-	return ms_aWindows.empty() ? nullptr : ms_aWindows.front();
+	const auto pItem = std::find_if(ms_aWindows.begin(), ms_aWindows.end(), [](const CWindowUI *p) 
+	{
+		return p->IsRenderAllowed();
+	});
+	return pItem != ms_aWindows.end() ? (*pItem) : nullptr;
 }
 
 void CWindowUI::DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const
