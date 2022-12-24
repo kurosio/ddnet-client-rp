@@ -4,6 +4,7 @@
 
 #include <engine/keys.h>
 #include <engine/textrender.h>
+#include <engine/shared/config.h>
 
 #include <game/localization.h>
 
@@ -16,13 +17,13 @@ constexpr float s_BackgroundMargin = 2.0f;
 void CWindowUI::RenderWindowWithoutBordure()
 {
 	CUIRect Workspace{};
-	m_WindowRect.Margin(s_BackgroundMargin, &Workspace);
+	m_MainRect.Margin(s_BackgroundMargin, &Workspace);
 
 	// background draw
 	CUIRect Background{};
 	Workspace.Margin(-s_BackgroundMargin, &Background);
 	DrawUIRect(&Background, ColorRGBA(0.0f, 0.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 40.0f);
-	DrawUIRect(&Workspace, ColorRGBA(m_BackgroundColor), IGraphics::CORNER_ALL, 2.0f);
+	DrawUIRect(&Workspace, ColorRGBA(m_ColorTone), IGraphics::CORNER_ALL, 2.0f);
 
 	// render callback
 	if(m_pCallback)
@@ -38,13 +39,13 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	static float s_WindowSkipMovingX;
 	static float s_WindowSkipMovingY;
-	if(m_WindowMoving)
+	if(m_Moving)
 	{
-		m_WindowRect.x = m_WindowBordure.x = clamp(m_pUI->MouseX() - s_WindowSkipMovingX, 0.0f, m_pUI->Screen()->w - m_WindowRect.w);
-		m_WindowRect.y = m_WindowBordure.y = clamp(m_pUI->MouseY() - s_WindowSkipMovingY, 0.0f, m_pUI->Screen()->h - m_WindowRect.h);
+		m_MainRect.x = m_Bordure.x = clamp(m_pUI->MouseX() - s_WindowSkipMovingX, 0.0f, m_pUI->Screen()->w - m_MainRect.w);
+		m_MainRect.y = m_Bordure.y = clamp(m_pUI->MouseY() - s_WindowSkipMovingY, 0.0f, m_pUI->Screen()->h - m_MainRect.h);
 		if(!m_pUI->Input()->KeyIsPressed(KEY_MOUSE_1))
 		{
-			m_WindowMoving = false;
+			m_Moving = false;
 			s_WindowSkipMovingX = 0.0f;
 			s_WindowSkipMovingY = 0.0f;
 		}
@@ -61,7 +62,7 @@ void CWindowUI::RenderDefaultWindow()
 	 * Set bordure rect
 	 */
 	CUIRect Workspace{};
-	m_WindowRect.HSplitTop(BordureWidth, &m_WindowBordure, &Workspace);
+	m_MainRect.HSplitTop(BordureWidth, &m_Bordure, &Workspace);
 
 	/*
 	 * Background draw
@@ -69,13 +70,13 @@ void CWindowUI::RenderDefaultWindow()
 	const bool IsActiveWindow = IsActive();
 	{
 		CUIRect ShadowBackground{};
-		m_WindowRect.Margin(-1.5f, &ShadowBackground);
-		DrawUIRectMonochrome(&ShadowBackground, m_BackgroundColor / 1.5f, IGraphics::CORNER_ALL, Rounding);
+		m_MainRect.Margin(-1.5f, &ShadowBackground);
+		DrawUIRectMonochrome(&ShadowBackground, m_ColorTone / 1.5f, IGraphics::CORNER_ALL, Rounding);
 
-		if(!m_WindowMinimize)
+		if(!m_Minimized)
 		{
 			const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActiveWindow, 0.4f);
-			const vec4 Color = mix(m_BackgroundColor, m_BackgroundColor + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
+			const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
 			DrawUIRect(&Workspace, ColorRGBA(Color), IGraphics::CORNER_ALL, Rounding);
 		}
 	}
@@ -84,17 +85,17 @@ void CWindowUI::RenderDefaultWindow()
 	 * Bordure draw
 	 */
 	{
-		const float BordureFade = m_pUI->GetFade(&m_WindowBordure, IsActiveWindow);
-		const vec4 Color = mix(m_BackgroundColor, m_BackgroundColor + vec4(0.2f, 0.2f, 0.2f, 0.f), BordureFade);
-		DrawUIRectMonochrome(&m_WindowBordure, ColorRGBA(Color), m_WindowMinimize ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
+		const float BordureFade = m_pUI->GetFade(&m_Bordure, IsActiveWindow);
+		const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.2f, 0.2f, 0.2f, 0.f), BordureFade);
+		DrawUIRectMonochrome(&m_Bordure, ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
 	}
 
 	/*
 	 * Window name
 	 */
 	CUIRect Label{};
-	m_WindowBordure.VSplitLeft(10.0f, 0, &Label);
-	m_pUI->DoLabel(&Label, m_aWindowName, FontSize, TEXTALIGN_LEFT);
+	m_Bordure.VSplitLeft(10.0f, 0, &Label);
+	m_pUI->DoLabel(&Label, m_aName, FontSize, TEXTALIGN_LEFT);
 	
 	/*
 	 * Button bordure top func
@@ -135,7 +136,7 @@ void CWindowUI::RenderDefaultWindow()
 	/*
 	 * Callback func
 	 */
-	if(!m_WindowMinimize && m_pCallback)
+	if(!m_Minimized && m_pCallback)
 	{
 		Workspace.Margin(s_BackgroundMargin, &Workspace);
 		m_pCallback(Workspace, this);
@@ -146,14 +147,14 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	{
 		CUIRect ButtonTop{};
-		m_WindowBordure.VSplitRight(24.0f, nullptr, &ButtonTop);
+		m_Bordure.VSplitRight(24.0f, nullptr, &ButtonTop);
 
 		// close button
-		if(m_WindowFlags & WINDOWFLAG_CLOSE && CreateButtonTop(&ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
+		if(m_Flags & WINDOWFLAG_CLOSE && CreateButtonTop(&ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
 			Close();
 
 		// minimize button
-		if(m_WindowFlags & WINDOWFLAG_MINIMIZE && CreateButtonTop(&ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_WindowMinimize ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
+		if(m_Flags & WINDOWFLAG_MINIMIZE && CreateButtonTop(&ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
 			MinimizeWindow();
 
 		// helppage button
@@ -173,13 +174,13 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	if(DissalowWindowMoving)
 	{
-		m_WindowMoving = false;
+		m_Moving = false;
 	}
-	else if(m_pUI->Input()->KeyPress(KEY_MOUSE_1) && m_pUI->MouseHovered(&m_WindowBordure))
+	else if(m_pUI->Input()->KeyPress(KEY_MOUSE_1) && m_pUI->MouseHovered(&m_Bordure))
 	{
-		m_WindowMoving = true;
-		s_WindowSkipMovingX = (m_pUI->MouseX() - m_WindowRect.x);
-		s_WindowSkipMovingY = (m_pUI->MouseY() - m_WindowRect.y);
+		m_Moving = true;
+		s_WindowSkipMovingX = (m_pUI->MouseX() - m_MainRect.x);
+		s_WindowSkipMovingY = (m_pUI->MouseY() - m_MainRect.y);
 	}
 }
 
@@ -192,13 +193,13 @@ void CWindowUI::Render()
 		m_pUI->StartCheckWindow(this);
 
 		// render window types
-		if(m_WindowFlags & WINDOW_WITHOUT_BORDURE)
+		if(m_Flags & WINDOW_WITHOUT_BORDURE)
 			RenderWindowWithoutBordure();
 		else
 			RenderDefaultWindow();
 
 		// close window when is unactive
-		if(m_WindowFlags & WINDOW_CLOSE_CLICKING_OUTSIDE && !IsActive())
+		if(m_Flags & WINDOW_CLOSE_CLICKING_OUTSIDE && !IsActive())
 			Close();
 
 		// end check only this window
@@ -232,17 +233,17 @@ CWindowUI * CWindowUI::GetChild(const char *pChildName)
 	char aChildNameBuf[64];
 	GetFullChildWindowName(pChildName, aChildNameBuf, sizeof(aChildNameBuf));
 
-	return SearchWindowByKeyName(m_paChildrenWindows, aChildNameBuf);
+	return SearchWindowByKeyName(m_paChildrens, aChildNameBuf);
 }
 
 void CWindowUI::GetFullChildWindowName(const char *pChildName, char *aBuf, int Size)
 {
-	str_format(aBuf, Size, "%s : %s", m_aWindowName, pChildName);
+	str_format(aBuf, Size, "%s : %s", m_aName, pChildName);
 }
 
 bool CWindowUI::operator==(const CWindowUI &p) const
 {
-	return str_comp(m_aWindowName, p.m_aWindowName) == 0;
+	return str_comp(m_aName, p.m_aName) == 0;
 }
 
 void CWindowUI::InitComponents(CUI *pUI, CRenderTools *pRenderTools)
@@ -255,44 +256,44 @@ void CWindowUI::InitComponents(CUI *pUI, CRenderTools *pRenderTools)
 
 void CWindowUI::MinimizeWindow()
 {
-	m_WindowMinimize ^= true;
-	if(m_WindowMinimize)
+	m_Minimized ^= true;
+	if(m_Minimized)
 	{
-		m_WindowRectReserve = m_WindowRect;
-		m_WindowRect = m_WindowBordure;
+		m_RectReserve = m_MainRect;
+		m_MainRect = m_Bordure;
 		return;
 	}
 
-	m_WindowRectReserve.x = clamp(m_WindowRect.x, 0.0f, m_pUI->Screen()->w - m_WindowRectReserve.w);
-	m_WindowRectReserve.y = clamp(m_WindowRect.y, 0.0f, m_pUI->Screen()->h - m_WindowRectReserve.h);
-	m_WindowRect = m_WindowRectReserve;
+	m_RectReserve.x = clamp(m_MainRect.x, 0.0f, m_pUI->Screen()->w - m_RectReserve.w);
+	m_RectReserve.y = clamp(m_MainRect.y, 0.0f, m_pUI->Screen()->h - m_RectReserve.h);
+	m_MainRect = m_RectReserve;
 }
 
 // - - -- - -- - -- - -- - -- - -- - -
 // Functions for working with windows
 void CWindowUI::Init(vec2 WindowSize, bool* pRenderDependence)
 {
-	m_WindowBordure = { 0, 0, 0, 0 };
-	m_WindowRect = { 0, 0, WindowSize.x, WindowSize.y };
-	m_DefaultWindowRect = m_WindowRect;
-	m_WindowRectReserve = m_WindowRect;
-	m_WindowMinimize = false;
-	m_WindowMoving = false;
-	m_BackgroundColor = DEFAULT_BACKGROUND_WINDOW_COLOR;
+	m_ColorTone = ColorHSLA(g_Config.m_UiWindowColor, true);
+	m_Bordure = { 0, 0, 0, 0 };
+	m_MainRect = { 0, 0, WindowSize.x, WindowSize.y };
+	m_DefaultRect = m_MainRect;
+	m_RectReserve = m_MainRect;
+	m_Minimized = false;
+	m_Moving = false;
 	if(pRenderDependence)
 		m_pRenderDependence = pRenderDependence;
 }
 
 const CUIRect& CWindowUI::GetRect() const
 {
-	return m_WindowRect;
+	return m_MainRect;
 }
 
 CWindowUI::CWindowUI(const char* pWindowName, vec2 WindowSize, bool* pRenderDependence, int WindowFlags)
 {
 	m_Openned = false;
-	m_WindowFlags = WindowFlags;
-	str_copy(m_aWindowName, pWindowName, sizeof(m_aWindowName));
+	m_Flags = WindowFlags;
+	str_copy(m_aName, pWindowName, sizeof(m_aName));
 	Init(WindowSize, pRenderDependence);
 }
 
@@ -308,20 +309,20 @@ bool CWindowUI::IsActive() const
 
 void CWindowUI::Open()
 {
-	CUIRect NewWindowRect = { 0, 0, m_WindowRectReserve.w, m_WindowRectReserve.h };
+	CUIRect NewWindowRect = { 0, 0, m_RectReserve.w, m_RectReserve.h };
 	m_pUI->MouseRectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
 
-	m_WindowRect = NewWindowRect;
+	m_MainRect = NewWindowRect;
 	m_Openned = true;
-	m_WindowMoving = false;
-	m_WindowMinimize = false;
+	m_Moving = false;
+	m_Minimized = false;
 	SetActiveWindow(this);
 }
 
 void CWindowUI::Close()
 {
 	m_Openned = false;
-	for(auto& p : m_paChildrenWindows)
+	for(auto& p : m_paChildrens)
 		p->Close();
 }
 
@@ -346,17 +347,17 @@ void CWindowUI::Register(RenderWindowCallback pCallback, RenderWindowCallback pC
 
 void CWindowUI::SetWorkspace(vec2 WorkspaceSize)
 {
-	float Width = round_to_int(WorkspaceSize.x) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_WindowRect.w : WorkspaceSize.x;
-	float Height = round_to_int(WorkspaceSize.y) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_WindowRect.h : WorkspaceSize.y;
+	float Width = round_to_int(WorkspaceSize.x) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_MainRect.w : WorkspaceSize.x;
+	float Height = round_to_int(WorkspaceSize.y) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_MainRect.h : WorkspaceSize.y;
 
 	CUIRect NewWindowRect = {0, 0, Width, Height};
-	if(round_to_int(NewWindowRect.w) != round_to_int(m_WindowRect.w) || round_to_int(NewWindowRect.h) != round_to_int(m_WindowRect.h))
+	if(round_to_int(NewWindowRect.w) != round_to_int(m_MainRect.w) || round_to_int(NewWindowRect.h) != round_to_int(m_MainRect.h))
 	{
 		m_pUI->MouseRectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
-		m_WindowRect.w = NewWindowRect.w;
-		m_WindowRect.h = NewWindowRect.h;
-		m_WindowRectReserve.w = NewWindowRect.w;
-		m_WindowRectReserve.h = NewWindowRect.h;
+		m_MainRect.w = NewWindowRect.w;
+		m_MainRect.h = NewWindowRect.h;
+		m_RectReserve.w = NewWindowRect.w;
+		m_RectReserve.h = NewWindowRect.h;
 	}
 }
 

@@ -2483,7 +2483,7 @@ void CMenus::OnRender()
 		// create child and register callback render
 		pPiskaWin->AddChild("Child", vec2(300, 100))->Register([this](CUIRect MainView, CWindowUI *pWindow) 
 		{
-			pWindow->SetBackgroundColor(ColorHSLA(582533173, true));
+			pWindow->SetColorTone(ColorHSLA(582533173, true));
 			UI()->DoLabel(&MainView, "SDkosad kosakdo askdo sak", 12.0f, TEXTALIGN_CENTER);
 		});
 

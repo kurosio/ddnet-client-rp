@@ -9,7 +9,6 @@
 #include <vector>
 
 #define DEFAULT_WORKSPACE_SIZE (-1.f)
-#define DEFAULT_BACKGROUND_WINDOW_COLOR ColorHSLA(4280956495, true)
 #define WINREGISTER(f, o)  std::bind(f, o, std::placeholders::_1, std::placeholders::_2)
 
 class CWindowUI
@@ -27,18 +26,18 @@ class CWindowUI
 	RenderWindowCallback m_pCallbackHelp{};
 
 	bool m_Openned{};
-	vec4 m_BackgroundColor{};
-	char m_aWindowName[128]{};
-	CUIRect m_WindowRect{};
-	CUIRect m_WindowBordure{};
-	CUIRect m_WindowRectReserve{};
-	CUIRect m_DefaultWindowRect{};
+	vec4 m_ColorTone{};
+	char m_aName[128]{};
+	CUIRect m_MainRect{};
+	CUIRect m_Bordure{};
+	CUIRect m_RectReserve{};
+	CUIRect m_DefaultRect{};
 	bool *m_pRenderDependence{};
-	std::vector<CWindowUI *> m_paChildrenWindows;
+	std::vector<CWindowUI *> m_paChildrens;
 
-	int m_WindowFlags{};
-	bool m_WindowMinimize{};
-	bool m_WindowMoving{};
+	int m_Flags{};
+	bool m_Minimized{};
+	bool m_Moving{};
 
 	CWindowUI() = default;
 	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = WINDOWFLAG_ALL);
@@ -65,8 +64,8 @@ public:
 	 */
 	CWindowUI* AddChild(CWindowUI* pWindow)
 	{
-		if(!SearchWindowByKeyName(m_paChildrenWindows, pWindow->GetWindowName()))
-			m_paChildrenWindows.emplace_back(pWindow);
+		if(!SearchWindowByKeyName(m_paChildrens, pWindow->GetWindowName()))
+			m_paChildrens.emplace_back(pWindow);
 		return pWindow;
 	}
 
@@ -115,7 +114,7 @@ public:
 		Function: GetWindowName -> const char
 			- Returns the window name.
 	*/
-	const char* GetWindowName() const { return m_aWindowName; }
+	const char* GetWindowName() const { return m_aName; }
 
 	/*
 		Function: Open -> void
@@ -173,20 +172,20 @@ public:
 	*/
 	void SetDefaultWorkspace()
 	{
-		m_WindowRect.w = m_DefaultWindowRect.w;
-		m_WindowRect.h = m_DefaultWindowRect.h;
+		m_MainRect.w = m_DefaultRect.w;
+		m_MainRect.h = m_DefaultRect.h;
 	}
 
 	/*
-		Function: SetBackgroundColor -> void
-			- Set background color.
+		Function: SetColorTone -> void
+			- Set tone color.
 		Parameters:
 			- Color - vector4 color.
 	*/
-	void SetBackgroundColor(vec4 Color)
+	void SetColorTone(vec4 Color)
 	{
 		if(Color.a > 0.0f)
-			m_BackgroundColor = Color;
+			m_ColorTone = Color;
 	}
 	
 	/*
@@ -195,7 +194,7 @@ public:
 	*/
 	void MarginWorkspace(float Width, float Height)
 	{
-		SetWorkspace({ m_WindowRect.w - Width, m_WindowRect.h - Height });
+		SetWorkspace({ m_MainRect.w - Width, m_MainRect.h - Height });
 		
 	}
 
@@ -218,7 +217,7 @@ private:
 	static CWindowUI *SearchWindowByKeyName(std::vector<CWindowUI *> &pVector, const char *pSearchKeyName);
 
 	bool IsRenderAllowed() const { return m_Openned && m_pCallback && (m_pRenderDependence == nullptr || (m_pRenderDependence && *m_pRenderDependence == true)); }
-	bool IsMoving() const { return m_WindowMoving; }
+	bool IsMoving() const { return m_Moving; }
 
 	// tools
 	void DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const;

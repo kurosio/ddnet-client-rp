@@ -40,13 +40,13 @@ bool CWindowController::OnInput(IInput::CEvent Event)
 	{
 		if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow())
 		{
-			if((pWindowActive->m_WindowFlags & CWindowUI::WINDOWFLAG_CLOSE) && Input()->KeyPress(KEY_Q))
+			if((pWindowActive->m_Flags & CWindowUI::WINDOWFLAG_CLOSE) && Input()->KeyPress(KEY_Q))
 			{
 				pWindowActive->Close();
 				return true;
 			}
 
-			if((pWindowActive->m_WindowFlags & CWindowUI::WINDOWFLAG_MINIMIZE) && Input()->KeyPress(KEY_M))
+			if((pWindowActive->m_Flags & CWindowUI::WINDOWFLAG_MINIMIZE) && Input()->KeyPress(KEY_M))
 			{
 				pWindowActive->MinimizeWindow();
 				return true;
@@ -61,7 +61,7 @@ void CWindowController::Update(bool* pCursor) const
 {
 	// update hovered the active highlighted area
 	if(auto pHovered = std::find_if(CWindowUI::ms_aWindows.begin(), CWindowUI::ms_aWindows.end(), [this](CWindowUI *p) 
-		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_WindowRect) || p->IsMoving()); }); pHovered != CWindowUI::ms_aWindows.end())
+		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_MainRect) || p->IsMoving()); }); pHovered != CWindowUI::ms_aWindows.end())
 		UI()->SetHoveredWindow(*pHovered);
 
 	// draw in reverse order as they are sorted here
@@ -74,7 +74,7 @@ void CWindowController::Update(bool* pCursor) const
 			// start check only this window
 			UI()->StartCheckWindow(*it);
 
-			if(CWindowUI::GetActiveWindow() != (*it) && Input()->KeyPress(KEY_MOUSE_1) && UI()->MouseHovered(&(*it)->m_WindowRect))
+			if(CWindowUI::GetActiveWindow() != (*it) && Input()->KeyPress(KEY_MOUSE_1) && UI()->MouseHovered(&(*it)->m_MainRect))
 				CWindowUI::SetActiveWindow((*it));
 
 			// end check only this window

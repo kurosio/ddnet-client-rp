@@ -226,7 +226,7 @@ bool CUI::MouseInside(const CUIRect *pRect) const
 
 bool CUI::MouseHovered(const CUIRect *pRect) const
 {
-	if(m_pHoveredWindow && m_pCheckedWindow && m_pCheckedWindow == m_pHoveredWindow && MouseInside(&m_pHoveredWindow->m_WindowRect))
+	if(m_pHoveredWindow && m_pCheckedWindow && m_pCheckedWindow == m_pHoveredWindow && MouseInside(&m_pHoveredWindow->m_MainRect))
 		return MouseInside(pRect) && MouseInsideClip();
 
 	// this logic ignores all MouseHovered excluding its area and available area.
@@ -236,7 +236,7 @@ bool CUI::MouseHovered(const CUIRect *pRect) const
 	{
 		for(auto &p : CWindowUI::ms_aWindows)
 		{
-			if(p->IsRenderAllowed() && MouseInside(&p->m_WindowRect))
+			if(p->IsRenderAllowed() && MouseInside(&p->m_MainRect))
 				return false;
 		}
 
