@@ -7,8 +7,8 @@
 
 #include "game/localization.h"
 
-#include "gameclient.h"
 #include "render.h"
+#include "ui.h"
 
 constexpr float s_BackgroundMargin = 2.0f;
 
