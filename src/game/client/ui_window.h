@@ -222,7 +222,8 @@ private:
 	bool IsMoving() const { return m_WindowMoving; }
 
 	// tools
-	void DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding);
+	void DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const;
+	void DrawUIRectMonochrome(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const;
 };
 
 

@@ -5,7 +5,7 @@
 #include <engine/keys.h>
 #include <engine/textrender.h>
 
-#include "game/localization.h"
+#include <game/localization.h>
 
 #include "render.h"
 #include "ui.h"
@@ -68,7 +68,7 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	CUIRect ShadowBackground{};
 	m_WindowRect.Margin(-1.5f, &ShadowBackground);
-	DrawUIRect(&ShadowBackground, ColorRGBA(DEFAULT_BACKGROUND_WINDOW_SHANDOW), IGraphics::CORNER_ALL, Rounding);
+	DrawUIRectMonochrome(&ShadowBackground, ColorRGBA(DEFAULT_BACKGROUND_WINDOW_SHANDOW), IGraphics::CORNER_ALL, Rounding);
 	
 	const bool IsActiveWindow = IsActive();
 	if(!m_WindowMinimize)
@@ -83,7 +83,7 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	const float BordureFade = m_pUI->GetFade(&m_WindowBordure, IsActiveWindow);
 	const vec4 Color = mix(vec4(0.2f, 0.2f, 0.2f, 1.0f), vec4(0.4f, 0.4f, 0.4f, 1.0f), BordureFade);
-	DrawUIRect(&m_WindowBordure, ColorRGBA(Color), m_WindowMinimize ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
+	DrawUIRectMonochrome(&m_WindowBordure, ColorRGBA(Color), m_WindowMinimize ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, Rounding);
 
 	/*
 	 * Window name
@@ -100,22 +100,24 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		CUIRect Button = *(pButtonRect);
 		const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));
-		DrawUIRect(&Button, ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, Rounding);
+		DrawUIRectMonochrome(&Button, ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, Rounding);
 		m_pUI->DoLabel(&Button, pSymbolUTF, FontSize, TEXTALIGN_CENTER);
 		pButtonRect->x -= 24.f;
 
 		bool Active = false;
 		if(IsActiveWindow && m_pUI->MouseHovered(&Button))
 		{
+			constexpr float FontSizeHint = 8.0f;
 			const char* HotKeyLabel = Localize(pHintStr);
-			const float TextWidth = m_pUI->TextRender()->TextWidth(0, FontSize, HotKeyLabel, -1, -1.0f);
-			CUIRect BackgroundKeyPress = { 0.f, 0.f, 10.0f + TextWidth, 20.f };
+			const float TextWidth = m_pUI->TextRender()->TextWidth(0, FontSizeHint, HotKeyLabel, -1, -1.0f);
+
+			CUIRect BackgroundKeyPress = {0.f, 0.f, 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin };
 			m_pUI->MouseRectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
 			DrawUIRect(&BackgroundKeyPress, vec4(0.1f, 0.1f, 0.1f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 
 			CUIRect LabelKeyInfo = BackgroundKeyPress;
 			LabelKeyInfo.Margin(s_BackgroundMargin, &LabelKeyInfo);
-			m_pUI->DoLabel(&LabelKeyInfo, HotKeyLabel, FontSize, TEXTALIGN_CENTER);
+			m_pUI->DoLabel(&LabelKeyInfo, HotKeyLabel, FontSizeHint, TEXTALIGN_CENTER);
 
 			Active = m_pUI->Input()->KeyPress(KEY_MOUSE_1);
 		}
@@ -368,7 +370,13 @@ CWindowUI* CWindowUI::GetActiveWindow()
 	return ms_aWindows.empty() ? nullptr : ms_aWindows.front();
 }
 
-void CWindowUI::DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding)
+void CWindowUI::DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const
 {
 	m_pRenderTools->Graphics()->DrawRect(pRect->x, pRect->y, pRect->w, pRect->h, Color, Corner, Rounding);
+}
+
+void CWindowUI::DrawUIRectMonochrome(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const
+{
+	const ColorRGBA ColorMonochrome = ColorRGBA(maximum(Color.r - 0.05f, 0.0f), maximum(Color.g - 0.05f, 0.0f), maximum(Color.b - 0.05f, 0.0f), Color.a);
+	m_pRenderTools->Graphics()->DrawRect4(pRect->x, pRect->y, pRect->w, pRect->h, Color, Color, ColorMonochrome, ColorMonochrome, Corner, Rounding);
 }
