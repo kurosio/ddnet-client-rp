@@ -118,10 +118,13 @@ public:
 	/*
 		Function: Open -> void
 			- Opens a window.
+		Parameters:
+			- X, Y (vec2 Position) - Window position if not set it's will be openned near mouse.
 		Remarks:
 			- If window already openned, it will be reopened.
 	*/
-	void Open();
+	void Open(float X = 0.f, float Y = 0.f);
+	void Open(vec2 Position) { Open(Position.x, Position.y); }
 
 	/*
 		Function: Close -> void

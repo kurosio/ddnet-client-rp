@@ -116,8 +116,8 @@ void CWindowUI::RenderDefaultWindow()
 			const char* HotKeyLabel = Localize(pHintStr);
 			const float TextWidth = m_pUI->TextRender()->TextWidth(0, FontSizeHint, HotKeyLabel, -1, -1.0f);
 
-			CUIRect BackgroundKeyPress = {0.f, 0.f, 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin };
-			m_pUI->MouseRectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
+			CUIRect BackgroundKeyPress = {m_pUI->MouseX(), m_pUI->MouseY(), 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin};
+			m_pUI->RectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
 			DrawUIRect(&BackgroundKeyPress, vec4(0.1f, 0.1f, 0.1f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 
 			CUIRect LabelKeyInfo = BackgroundKeyPress;
@@ -305,10 +305,10 @@ bool CWindowUI::IsActive() const
 	return (bool)(m_Openned && GetActiveWindow() == this);
 }
 
-void CWindowUI::Open()
+void CWindowUI::Open(float X, float Y)
 {
-	CUIRect NewWindowRect = { 0, 0, m_ReserveRect.w, m_ReserveRect.h };
-	m_pUI->MouseRectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
+	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_ReserveRect.w, m_ReserveRect.h };
+	m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
 
 	m_MainRect = NewWindowRect;
 	m_Openned = true;
@@ -348,14 +348,12 @@ void CWindowUI::SetWorkspace(vec2 WorkspaceSize)
 	float Width = round_to_int(WorkspaceSize.x) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_MainRect.w : WorkspaceSize.x;
 	float Height = round_to_int(WorkspaceSize.y) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_MainRect.h : WorkspaceSize.y;
 
-	CUIRect NewWindowRect = {0, 0, Width, Height};
+	CUIRect NewWindowRect = {m_MainRect.x, m_MainRect.y, Width, Height};
 	if(round_to_int(NewWindowRect.w) != round_to_int(m_MainRect.w) || round_to_int(NewWindowRect.h) != round_to_int(m_MainRect.h))
 	{
-		m_pUI->MouseRectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
-		m_MainRect.w = NewWindowRect.w;
-		m_MainRect.h = NewWindowRect.h;
-		m_ReserveRect.w = NewWindowRect.w;
-		m_ReserveRect.h = NewWindowRect.h;
+		m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
+		m_MainRect = NewWindowRect;
+		m_ReserveRect = NewWindowRect;
 	}
 }
 

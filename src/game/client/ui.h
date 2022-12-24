@@ -371,7 +371,7 @@ public:
 		RECTLIMITSCREEN_SKIP_BORDURE_DOWN = 1 << 3,
 		RECTLIMITSCREEN_ALIGN_CENTER_X = 1 << 4,
 	};
-	void MouseRectLimitMapScreen(CUIRect *pRect, float Indent, int LimitRectFlag = -1);
+	void RectLimitMapScreen(CUIRect *pRect, float Indent, int LimitRectFlag = -1);
 
 	// anim fades		
 	struct AnimFade

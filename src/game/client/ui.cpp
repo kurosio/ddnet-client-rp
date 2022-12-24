@@ -1346,14 +1346,13 @@ void CUI::DoScrollbarOptionLabeled(const void *pID, int *pOption, const CUIRect 
 }
 
 // rect limiter for bordour
-void CUI::MouseRectLimitMapScreen(CUIRect *pRect, float Indent, int LimitRectFlag)
+void CUI::RectLimitMapScreen(CUIRect *pRect, float Indent, int LimitRectFlag)
 {
 	const float MaxWidth = Screen()->w;
 	const float MaxHeight = Screen()->h;
 	const float SpaceWidthX = Screen()->w / 24.f;
 	const float SpaceHeightY = Screen()->h / 24.f;
 
-	pRect->x = MouseX();
 	if(pRect->x < MaxWidth / 2.0f)
 	{
 		pRect->x -= pRect->w + Indent;
@@ -1370,7 +1369,6 @@ void CUI::MouseRectLimitMapScreen(CUIRect *pRect, float Indent, int LimitRectFla
 			pRect->x = (MaxWidth - pRect->w) - (Indent + SpaceWidthX);
 	}
 
-	pRect->y = MouseY();
 	if((pRect->y < MaxHeight / 2.0f && LimitRectFlag & RECTLIMITSCREEN_DOWN) || LimitRectFlag == RECTLIMITSCREEN_ALL)
 	{
 		if(LimitRectFlag & RECTLIMITSCREEN_SKIP_BORDURE_DOWN)

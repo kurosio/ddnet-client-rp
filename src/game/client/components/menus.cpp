@@ -2467,7 +2467,7 @@ void CMenus::OnRender()
 	if(CWindowUI *pPiskaWin = UI()->GetWindow("Piska1"); !pPiskaWin)
 	{
 		// create window
-		pPiskaWin = UI()->CreateWindow("Piska1", vec2(200, 200));
+		pPiskaWin = UI()->CreateWindow("Piska1", vec2(200, 200), &m_MenuActive);
 
 		// register callback
 		pPiskaWin->Register([this](CUIRect MainView, CWindowUI *pWindow) 
@@ -2488,7 +2488,7 @@ void CMenus::OnRender()
 		});
 
 		// open window
-		pPiskaWin->Open();
+		pPiskaWin->Open(50, 400);
 	}
 
 	UI()->ClearHotkeys();
