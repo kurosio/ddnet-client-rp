@@ -25,21 +25,36 @@ void CWindowController::OnRender()
 	bool ShowCursor = false;
 	Update(&ShowCursor);
 
-	// hotkeys
-	if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow())
-	{
-		if((pWindowActive->m_WindowFlags & CWindowUI::WINDOWFLAG_CLOSE) && Input()->KeyIsPressed(KEY_LCTRL) && Input()->KeyPress(KEY_Q))
-			pWindowActive->Close();
-		if((pWindowActive->m_WindowFlags & CWindowUI::WINDOWFLAG_MINIMIZE) && Input()->KeyIsPressed(KEY_LCTRL) && Input()->KeyPress(KEY_M))
-			pWindowActive->MinimizeWindow();
-	}
-
 	// render cursor
 	if(ShowCursor)
 		RenderTools()->RenderCursor(vec2(UI()->MouseX(), UI()->MouseY()), 24.f);
 
 	// finish all checks button logics
 	UI()->FinishCheck();
+}
+
+bool CWindowController::OnInput(IInput::CEvent Event)
+{
+	// hotkeys
+	if(Input()->KeyIsPressed(KEY_LCTRL))
+	{
+		if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow())
+		{
+			if((pWindowActive->m_WindowFlags & CWindowUI::WINDOWFLAG_CLOSE) && Input()->KeyPress(KEY_Q))
+			{
+				pWindowActive->Close();
+				return true;
+			}
+
+			if((pWindowActive->m_WindowFlags & CWindowUI::WINDOWFLAG_MINIMIZE) && Input()->KeyPress(KEY_M))
+			{
+				pWindowActive->MinimizeWindow();
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void CWindowController::Update(bool* pCursor) const

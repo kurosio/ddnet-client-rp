@@ -15,6 +15,7 @@ public:
 
 	int Sizeof() const override { return sizeof(*this); }
 	void OnRender() override;
+	bool OnInput(IInput::CEvent Event) override;
 
 private:
 	void Update(bool *pCursor) const;
