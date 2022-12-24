@@ -32,6 +32,7 @@ class CWindowUI
 	CUIRect m_ReserveRect{};
 	CUIRect m_DefaultRect{};
 	bool *m_pRenderDependence{};
+	CWindowUI *m_Parent{};
 	std::vector<CWindowUI *> m_paChildrens;
 
 	int m_Flags{};
@@ -68,17 +69,22 @@ public:
 		return pWindow;
 	}
 
-	CWindowUI *AddChild(const char *pChildName, vec2 WindowSize, int WindowFlags = WINDOWFLAG_ALL);
+	CWindowUI *AddChild(const char *pName, vec2 WindowSize, int WindowFlags = WINDOWFLAG_ALL);
 
 	/*
 	 * Get child window
 	 */
-	CWindowUI *GetChild(const char *pChildName);
+	CWindowUI *GetChild(const char *pName);
 
 	/*
 	 * Get fully child window name
 	 */
-	void GetFullChildWindowName(const char *pChildName, char *aBuf, int Size);
+	void GetFullChildWindowName(const char *pName, char *aBuf, int Size);
+
+	/*
+	 * Get parent
+	 */
+	CWindowUI *GetParent() const { return m_Parent; }
 
 	/*
 		Operator ==

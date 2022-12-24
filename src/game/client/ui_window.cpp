@@ -223,15 +223,17 @@ CWindowUI *CWindowUI::AddChild(const char *pChildName, vec2 WindowSize, int Wind
 
 	CWindowUI *pWindow = SearchWindowByKeyName(ms_aWindows, aChildNameBuf);
 	if(!pWindow)
+	{
 		pWindow = m_pUI->CreateWindow(aChildNameBuf, WindowSize, m_pRenderDependence, WindowFlags);
-
+		pWindow->m_Parent = this;
+	}
 	return AddChild(pWindow);
 }
 
-CWindowUI * CWindowUI::GetChild(const char *pChildName)
+CWindowUI * CWindowUI::GetChild(const char *pName)
 {
 	char aChildNameBuf[64];
-	GetFullChildWindowName(pChildName, aChildNameBuf, sizeof(aChildNameBuf));
+	GetFullChildWindowName(pName, aChildNameBuf, sizeof(aChildNameBuf));
 
 	return SearchWindowByKeyName(m_paChildrens, aChildNameBuf);
 }
@@ -289,6 +291,7 @@ const CUIRect& CWindowUI::GetRect() const
 
 CWindowUI::CWindowUI(const char* pWindowName, vec2 WindowSize, bool* pRenderDependence, int WindowFlags)
 {
+	m_Parent = nullptr;
 	m_Openned = false;
 	m_Flags = WindowFlags;
 	str_copy(m_aName, pWindowName, sizeof(m_aName));
@@ -307,7 +310,8 @@ bool CWindowUI::IsActive() const
 
 void CWindowUI::Open(float X, float Y)
 {
-	Close();
+	for(const auto &p : m_paChildrens)
+		p->Close();
 
 	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_ReserveRect.w, m_ReserveRect.h };
 	m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
@@ -322,7 +326,7 @@ void CWindowUI::Open(float X, float Y)
 void CWindowUI::Close()
 {
 	m_Openned = false;
-	for(auto& p : m_paChildrens)
+	for(const auto &p : m_paChildrens)
 		p->Close();
 }
 
