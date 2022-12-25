@@ -195,7 +195,7 @@ void CWindowUI::Render()
 			RenderDefaultWindow();
 
 		// close window when clicking outside
-		if(m_Flags & WINDOW_CLOSE_CLICKING_OUTSIDE && !IsActive())
+		if(m_Flags & WINDOW_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_MainRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
 			Close();
 	}
 }
