@@ -151,7 +151,8 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 	MessageElemUI *pElement = CreateInformationBoxElement(Width, pMessage);
 	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)), pDepent);
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderInfoWindow, this));
-	pElement->m_pWindow->Open();
+	if(!pElement->m_pWindow->IsOpenned())
+		pElement->m_pWindow->Open();
 
 	UpdateElement(m_aElements, pElement);
 }
@@ -163,7 +164,8 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 	MessageElemUI *pElement = CreateInformationBoxElement(Width, pMessage);
 	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)));
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderInfoWindow, this));
-	pElement->m_pWindow->Open();
+	if(!pElement->m_pWindow->IsOpenned())
+		pElement->m_pWindow->Open();
 
 	UpdateElement(m_aElements, pElement);
 }
@@ -206,7 +208,8 @@ void CWindowController::CreatePopupBox(const char *pWindowName, float Width, con
 	PopupElemUI *pElement = CreatePopupElement(pMessage, std::move(Callback));
 	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_PopupFontSize)), pDepent);
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderGuiPopupBox, this));
-	pElement->m_pWindow->Open();
+	if(!pElement->m_pWindow->IsOpenned())
+		pElement->m_pWindow->Open();
 
 	UpdateElement(m_aElements, pElement);
 }
@@ -218,7 +221,8 @@ void CWindowController::CreatePopupBox(const char *pWindowName, float Width, con
 	PopupElemUI *pElement = CreatePopupElement(pMessage, std::move(Callback));
 	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_PopupFontSize)));
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderGuiPopupBox, this));
-	pElement->m_pWindow->Open();
+	if(!pElement->m_pWindow->IsOpenned())
+		pElement->m_pWindow->Open();
 
 	UpdateElement(m_aElements, pElement);
 }
