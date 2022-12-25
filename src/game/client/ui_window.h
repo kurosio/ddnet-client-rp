@@ -19,6 +19,7 @@ class CWindowUI
 	inline static std::vector<CWindowUI *> ms_aWindows;
 	inline static class CUI *m_pUI;
 	inline static class CRenderTools *m_pRenderTools;
+	inline static CWindowUI *m_pActiveWindow;
 
 	using RenderWindowCallback = std::function<void(CUIRect, CWindowUI*)>;
 	RenderWindowCallback m_pCallback{};
@@ -40,6 +41,7 @@ class CWindowUI
 	bool m_Moving{};
 
 	CWindowUI() = default;
+	~CWindowUI() = default;
 	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = WINDOWFLAG_ALL);
 
 	void RenderWindowWithoutBordure();
@@ -54,7 +56,7 @@ public:
 		WINDOWFLAG_ALL = WINDOWFLAG_MINIMIZE | WINDOWFLAG_CLOSE,
 
 		WINDOW_CLOSE_CLICKING_OUTSIDE = 1 << 2,
-		WINDOW_WITHOUT_BORDURE = 1 << 3 | WINDOW_CLOSE_CLICKING_OUTSIDE,
+		WINDOW_WITHOUT_BORDURE = 1 << 3,
 	};
 
 	CWindowUI(const CWindowUI& pWindow) = delete;

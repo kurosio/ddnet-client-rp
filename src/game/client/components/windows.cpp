@@ -46,7 +46,7 @@ bool CWindowController::OnInput(IInput::CEvent Event)
 	// hotkeys
 	if(Input()->KeyIsPressed(KEY_LCTRL))
 	{
-		if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow())
+		if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow(); pWindowActive)
 		{
 			if((pWindowActive->m_Flags & CWindowUI::WINDOWFLAG_CLOSE) && Input()->KeyPress(KEY_Q))
 			{
@@ -68,29 +68,40 @@ bool CWindowController::OnInput(IInput::CEvent Event)
 void CWindowController::Update(bool* pCursor) const
 {
 	// update hovered the active highlighted area
-	if(auto pHovered = std::find_if(CWindowUI::ms_aWindows.begin(), CWindowUI::ms_aWindows.end(), [this](CWindowUI *p) 
-		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_MainRect) || p->IsMoving()); }); pHovered != CWindowUI::ms_aWindows.end())
-		UI()->SetHoveredWindow(*pHovered);
+	if(const auto pItem = std::find_if(CWindowUI::ms_aWindows.begin(), CWindowUI::ms_aWindows.end(), [this](CWindowUI *p) 
+		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_MainRect) || p->IsMoving()); }); pItem != CWindowUI::ms_aWindows.end())
+		UI()->SetHoveredWindow(*pItem);
 
-	// draw in reverse order as they are sorted here
+	// update screen
 	auto [ScreenX, ScreenY, ScreenW, ScreenH] = *UI()->Screen();
 	Graphics()->MapScreen(ScreenX, ScreenY, ScreenW, ScreenH);
-	for(int i = static_cast<int>(CWindowUI::ms_aWindows.size()) - 1; i >= 0; i--)
+
+	// draw in reverse order as they are sorted here
+	const std::vector vWindows(CWindowUI::ms_aWindows);
+	const bool LeftMousePressed = Input()->KeyPress(KEY_MOUSE_1);
+	for(int i = static_cast<int>(vWindows.size()) - 1; i >= 0; i--)
 	{
-		CWindowUI *pWindow = CWindowUI::ms_aWindows[i];
+		CWindowUI *pWindow = vWindows[i];
 		if(pWindow->IsRenderAllowed())
 		{
 			// start check only this window
 			UI()->StartCheckWindow(pWindow);
 
-			if(CWindowUI::GetActiveWindow() != pWindow && Input()->KeyPress(KEY_MOUSE_1) && UI()->MouseHovered(&pWindow->m_MainRect))
-				CWindowUI::SetActiveWindow(pWindow);
+			// enable selection
+			if(LeftMousePressed)
+			{
+				if(const bool Hovered = UI()->MouseHovered(&pWindow->m_MainRect); CWindowUI::GetActiveWindow() != pWindow && Hovered)
+					CWindowUI::SetActiveWindow(pWindow);
+				else if(CWindowUI::GetActiveWindow() == pWindow && !Hovered)
+					CWindowUI::SetActiveWindow(nullptr);
+			}
+
+			// render
+			pWindow->Render();
+			*pCursor = true;
 
 			// end check only this window
 			UI()->FinishCheckWindow();
-
-			pWindow->Render();
-			*pCursor = true;
 		}
 	}
 
