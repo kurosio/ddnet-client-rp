@@ -42,7 +42,7 @@ class CWindowUI
 
 	CWindowUI() = default;
 	~CWindowUI() = default;
-	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = WINDOWFLAG_ALL);
+	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = WINDOWFLAG_DEFAULT);
 
 	void RenderWindowWithoutBordure();
 	void RenderDefaultWindow();
@@ -51,12 +51,14 @@ class CWindowUI
 public:
 	enum
 	{
-		WINDOWFLAG_MINIMIZE = 1 << 0,
-		WINDOWFLAG_CLOSE = 1 << 1,
-		WINDOWFLAG_ALL = WINDOWFLAG_MINIMIZE | WINDOWFLAG_CLOSE,
+		WINDOWFLAG_POSITION_CENTER = 1 << 0, // default it's mouse position
 
-		WINDOW_CLOSE_CLICKING_OUTSIDE = 1 << 2,
-		WINDOW_WITHOUT_BORDURE = 1 << 3,
+		WINDOWFLAG_MINIMIZE = 1 << 1,
+		WINDOWFLAG_CLOSE = 1 << 2,
+		WINDOWFLAG_DEFAULT = WINDOWFLAG_MINIMIZE | WINDOWFLAG_CLOSE,
+
+		WINDOWFLAG_CLOSE_CLICKING_OUTSIDE = 1 << 3,
+		WINDOWFLAG_WITHOUT_BORDURE = 1 << 4,
 	};
 
 	CWindowUI(const CWindowUI& pWindow) = delete;
@@ -71,7 +73,7 @@ public:
 		return pWindow;
 	}
 
-	CWindowUI *AddChild(const char *pName, vec2 WindowSize, int WindowFlags = WINDOWFLAG_ALL);
+	CWindowUI *AddChild(const char *pName, vec2 WindowSize, int WindowFlags = WINDOWFLAG_DEFAULT);
 
 	/*
 	 * Get child window

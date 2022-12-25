@@ -394,7 +394,7 @@ public:
 	void StartCheckWindow(class CWindowUI *pWindow) { m_pCheckedWindow = pWindow; }
 	void FinishCheckWindow() { m_pCheckedWindow = nullptr; }
 
-	CWindowUI *CreateWindow(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = CWindowUI::WINDOWFLAG_ALL);
+	CWindowUI *CreateWindow(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = CWindowUI::WINDOWFLAG_DEFAULT);
 	CWindowUI *GetWindow(const char *pWindowName) const;
 };
 

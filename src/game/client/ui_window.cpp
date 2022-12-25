@@ -189,13 +189,13 @@ void CWindowUI::Render()
 	if(IsRenderAllowed())
 	{
 		// render window types
-		if(m_Flags & WINDOW_WITHOUT_BORDURE)
+		if(m_Flags & WINDOWFLAG_WITHOUT_BORDURE)
 			RenderWindowWithoutBordure();
 		else
 			RenderDefaultWindow();
 
 		// close window when clicking outside
-		if(m_Flags & WINDOW_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_MainRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
+		if(m_Flags & WINDOWFLAG_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_MainRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
 			Close();
 	}
 }
@@ -309,6 +309,11 @@ void CWindowUI::Open(float X, float Y)
 
 	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_ReserveRect.w, m_ReserveRect.h };
 	m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
+	if(m_Flags & WINDOWFLAG_POSITION_CENTER)
+	{
+		NewWindowRect.x = (m_pUI->Screen()->w / 2.0f) - (m_ReserveRect.w / 2.0f);
+		NewWindowRect.y = (m_pUI->Screen()->h / 2.0f) - (m_ReserveRect.h / 2.0f);
+	}
 
 	m_MainRect = NewWindowRect;
 	m_Openned = true;
