@@ -252,5 +252,8 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 		State = PopupState::NO;
 
 	if(pElemPopup->m_pCallback)
+	{
+		State = PopupState::RENDER;
 		pElemPopup->m_pCallback(MainView, pCurrentWindow, State);
+	}
 }
