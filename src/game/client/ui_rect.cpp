@@ -176,6 +176,12 @@ void CUIRect::Draw(ColorRGBA Color, int Corners, float Rounding) const
 	s_pGraphics->DrawRect(x, y, w, h, Color, Corners, Rounding);
 }
 
+void CUIRect::DrawMonochrome(ColorRGBA Color, int Corners, float Rounding) const
+{
+	const ColorRGBA ColorMonochrome = ColorRGBA(maximum(Color.r - 0.05f, 0.0f), maximum(Color.g - 0.05f, 0.0f), maximum(Color.b - 0.05f, 0.0f), Color.a);
+	s_pGraphics->DrawRect4(x, y, w, h, Color, Color, ColorMonochrome, ColorMonochrome, Corners, Rounding);
+}
+
 void CUIRect::Draw4(ColorRGBA ColorTopLeft, ColorRGBA ColorTopRight, ColorRGBA ColorBottomLeft, ColorRGBA ColorBottomRight, int Corners, float Rounding) const
 {
 	s_pGraphics->DrawRect4(x, y, w, h, ColorTopLeft, ColorTopRight, ColorBottomLeft, ColorBottomRight, Corners, Rounding);

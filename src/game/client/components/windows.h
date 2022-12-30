@@ -8,19 +8,22 @@
 	UI elements.
 */
 #define POPUP_REGISTER(f, o)  std::bind(f, o, std::placeholders::_1, std::placeholders::_2)
-using PopupWindowCallback = std::function<void(class CWindowUI *, bool)>;
 
 struct BaseElemUI
 {
-	CWindowUI *m_pWindow{};
+	class CWindowUI *m_pWindow{};
 };
 
+// popup
+enum class PopupState : int { RENDER, YES, NO };
+using PopupWindowCallback = std::function<void(CUIRect MainView, class CWindowUI *, PopupState)>;
 struct PopupElemUI : BaseElemUI
 {
 	char m_aTextPopup[1024]{};
 	PopupWindowCallback m_pCallback{};
 };
 
+// message
 struct MessageElemUI : BaseElemUI
 {
 	char m_aMessageText[2048]{};
@@ -47,8 +50,8 @@ public:
 	bool OnInput(IInput::CEvent Event) override;
 
 	// popup elements
-	void CreatePopupBox(const char *pWindowName, float Width, const char *pMessage, PopupWindowCallback Callback, CWindowUI *pWindow);
-	void CreatePopupBox(const char *pWindowName, float Width, const char *pMessage, PopupWindowCallback Callback, bool *pDepent = nullptr);
+	void CreatePopupBox(int WindowFlags, const char *pWindowName, float Width, float AppendHeight, const char *pMessage, PopupWindowCallback Callback, CWindowUI *pWindow);
+	void CreatePopupBox(int WindowFlags, const char *pWindowName, float Width, float AppendHeight, const char *pMessage, PopupWindowCallback Callback, bool *pDepent = nullptr);
 
 	// message elements
 	void CreateInformationBox(const char *pWindowName, float Width, const char *pMessage, CWindowUI *pWindow);

@@ -25,11 +25,11 @@ void CWindowUI::RenderWindowWithoutBordure()
 	// background draw
 	CUIRect Background{};
 	Workspace.Margin(-s_BackgroundMargin, &Background);
-	DrawUIRectMonochrome(&Background, m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
+	Background.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
 
 	const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActive(), 0.4f);
 	const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
-	DrawUIRect(&Workspace, ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
+	Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
 
 	// render callback
 	if(m_pCallback)
@@ -70,13 +70,13 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		CUIRect ShadowBackground{};
 		m_MainRect.Margin(-1.5f, &ShadowBackground);
-		DrawUIRectMonochrome(&ShadowBackground, m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
+		ShadowBackground.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
 
 		if(!m_Minimized)
 		{
 			const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActiveWindow, 0.4f);
 			const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
-			DrawUIRect(&Workspace, ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
+			Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
 		}
 	}
 	
@@ -86,7 +86,7 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		const float BordureFade = m_pUI->GetFade(&m_BordureRect, IsActiveWindow);
 		const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.2f, 0.2f, 0.2f, 0.f), BordureFade);
-		DrawUIRectMonochrome(&m_BordureRect, ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, s_Rounding);
+		m_BordureRect.DrawMonochrome(ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, s_Rounding);
 	}
 
 	/*
@@ -104,7 +104,7 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		CUIRect Button = *(pButtonRect);
 		const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));
-		DrawUIRectMonochrome(&Button, ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, s_Rounding);
+		Button.DrawMonochrome(ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, s_Rounding);
 		m_pUI->DoLabel(&Button, pSymbolUTF, s_FontSize, TEXTALIGN_CENTER);
 		pButtonRect->x -= 24.f;
 
@@ -117,7 +117,7 @@ void CWindowUI::RenderDefaultWindow()
 
 			CUIRect BackgroundKeyPress = {m_pUI->MouseX(), m_pUI->MouseY(), 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin};
 			m_pUI->RectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
-			DrawUIRect(&BackgroundKeyPress, vec4(0.1f, 0.1f, 0.1f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+			BackgroundKeyPress.Draw(vec4(0.1f, 0.1f, 0.1f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 
 			CUIRect LabelKeyInfo = BackgroundKeyPress;
 			LabelKeyInfo.Margin(s_BackgroundMargin, &LabelKeyInfo);
@@ -149,11 +149,11 @@ void CWindowUI::RenderDefaultWindow()
 		m_BordureRect.VSplitRight(24.0f, nullptr, &ButtonTop);
 
 		// close button
-		if(m_Flags & WINDOWFLAG_CLOSE && CreateButtonTop(&ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
+		if(m_Flags & FLAG_CLOSE && CreateButtonTop(&ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
 			Close();
 
 		// minimize button
-		if(m_Flags & WINDOWFLAG_MINIMIZE && CreateButtonTop(&ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
+		if(m_Flags & FLAG_MINIMIZE && CreateButtonTop(&ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
 			MinimizeWindow();
 
 		// helppage button
@@ -189,13 +189,13 @@ void CWindowUI::Render()
 	if(IsRenderAllowed())
 	{
 		// render window types
-		if(m_Flags & WINDOWFLAG_WITHOUT_BORDURE)
+		if(m_Flags & FLAG_WITHOUT_BORDURE)
 			RenderWindowWithoutBordure();
 		else
 			RenderDefaultWindow();
 
 		// close window when clicking outside
-		if(m_Flags & WINDOWFLAG_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_MainRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
+		if(m_Flags & FLAG_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_MainRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
 			Close();
 	}
 }
@@ -309,7 +309,7 @@ void CWindowUI::Open(float X, float Y)
 
 	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_ReserveRect.w, m_ReserveRect.h };
 	m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
-	if(m_Flags & WINDOWFLAG_POSITION_CENTER)
+	if(m_Flags & FLAG_POSITION_CENTER)
 	{
 		NewWindowRect.x = (m_pUI->Screen()->w / 2.0f) - (m_ReserveRect.w / 2.0f);
 		NewWindowRect.y = (m_pUI->Screen()->h / 2.0f) - (m_ReserveRect.h / 2.0f);
@@ -383,15 +383,4 @@ void CWindowUI::SetActiveWindow(CWindowUI *pWindow)
 CWindowUI* CWindowUI::GetActiveWindow()
 {
 	return m_pActiveWindow;
-}
-
-void CWindowUI::DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const
-{
-	m_pRenderTools->Graphics()->DrawRect(pRect->x, pRect->y, pRect->w, pRect->h, Color, Corner, Rounding);
-}
-
-void CWindowUI::DrawUIRectMonochrome(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const
-{
-	const ColorRGBA ColorMonochrome = ColorRGBA(maximum(Color.r - 0.05f, 0.0f), maximum(Color.g - 0.05f, 0.0f), maximum(Color.b - 0.05f, 0.0f), Color.a);
-	m_pRenderTools->Graphics()->DrawRect4(pRect->x, pRect->y, pRect->w, pRect->h, Color, Color, ColorMonochrome, ColorMonochrome, Corner, Rounding);
 }

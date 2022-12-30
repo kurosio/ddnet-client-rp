@@ -1,10 +1,9 @@
 #include <engine/keys.h>
-#include <game/client/ui_rect.h>
+#include <game/client/ui.h>
 #include "windows.h"
 
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
-#include <game/client/ui.h>
 
 #include <utility>
 
@@ -48,13 +47,13 @@ bool CWindowController::OnInput(IInput::CEvent Event)
 	{
 		if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow(); pWindowActive)
 		{
-			if((pWindowActive->m_Flags & CWindowUI::WINDOWFLAG_CLOSE) && Input()->KeyPress(KEY_Q))
+			if((pWindowActive->m_Flags & CWindowUI::FLAG_CLOSE) && Input()->KeyPress(KEY_Q))
 			{
 				pWindowActive->Close();
 				return true;
 			}
 
-			if((pWindowActive->m_Flags & CWindowUI::WINDOWFLAG_MINIMIZE) && Input()->KeyPress(KEY_M))
+			if((pWindowActive->m_Flags & CWindowUI::FLAG_MINIMIZE) && Input()->KeyPress(KEY_M))
 			{
 				pWindowActive->MinimizeWindow();
 				return true;
@@ -189,7 +188,7 @@ void CWindowController::CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pC
 /* =====================================================================
  * Popup element                                                |     UI
  * ===================================================================== */
-constexpr float s_PopupFontSize = 10.0f;
+constexpr float s_PopupFontSize = 11.0f;
 PopupElemUI *CWindowController::CreatePopupElement(const char *pMessage, PopupWindowCallback Callback) const
 {
 	const CUIRect *pScreen = UI()->Screen();
@@ -201,12 +200,12 @@ PopupElemUI *CWindowController::CreatePopupElement(const char *pMessage, PopupWi
 	return pElement;
 }
 
-void CWindowController::CreatePopupBox(const char *pWindowName, float Width, const char *pMessage, PopupWindowCallback Callback, bool *pDepent)
+void CWindowController::CreatePopupBox(int WindowFlags, const char *pWindowName, float Width, float AppendHeight, const char *pMessage, PopupWindowCallback Callback, bool *pDepent)
 {
 	const int LineCount = TextRender()->TextLineCount(nullptr, s_PopupFontSize, pMessage, Width);
 
 	PopupElemUI *pElement = CreatePopupElement(pMessage, std::move(Callback));
-	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_PopupFontSize)), pDepent);
+	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 70.0f + (static_cast<float>(LineCount) * s_PopupFontSize) + AppendHeight), pDepent, WindowFlags);
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderGuiPopupBox, this));
 	if(!pElement->m_pWindow->IsOpenned())
 		pElement->m_pWindow->Open();
@@ -214,12 +213,12 @@ void CWindowController::CreatePopupBox(const char *pWindowName, float Width, con
 	UpdateElement(m_aElements, pElement);
 }
 
-void CWindowController::CreatePopupBox(const char *pWindowName, float Width, const char *pMessage, PopupWindowCallback Callback, CWindowUI *pWindow)
+void CWindowController::CreatePopupBox(int WindowFlags, const char *pWindowName, float Width, float AppendHeight, const char *pMessage, PopupWindowCallback Callback, CWindowUI *pWindow)
 {
-	const int LineCount = TextRender()->TextLineCount(0, s_PopupFontSize, pMessage, Width);
+	const int LineCount = TextRender()->TextLineCount(nullptr, s_PopupFontSize, pMessage, Width);
 
 	PopupElemUI *pElement = CreatePopupElement(pMessage, std::move(Callback));
-	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_PopupFontSize)));
+	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 70.0f + (static_cast<float>(LineCount) * s_PopupFontSize) + AppendHeight), WindowFlags);
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderGuiPopupBox, this));
 	if(!pElement->m_pWindow->IsOpenned())
 		pElement->m_pWindow->Open();
@@ -232,26 +231,26 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 	const PopupElemUI *pElemPopup = reinterpret_cast<PopupElemUI *>(*std::find_if(m_aElements.begin(), m_aElements.end(), [&pCurrentWindow](const BaseElemUI *p) 
 											{ return (p->m_pWindow == pCurrentWindow); }));
 
-	CUIRect Label{}, ButtonAccept{}, ButtonDeny{};
-	MainView.Margin(s_InformationBoxLabelSpace, &Label);
-	Label.HSplitBottom(18.0f, &Label, &ButtonAccept);
-	TextRender()->Text(nullptr, Label.x, Label.y, 10.0f, pElemPopup->m_aTextPopup, MainView.w);
-	ButtonAccept.VSplitLeft(Label.w / 2.0f, &ButtonDeny, &ButtonAccept);
+	CUIRect Label{}, ButtonAccept{}, ButtonDeny{}, Buttons{};
+	const int TextLines = TextRender()->TextLineCount(nullptr, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
+	MainView.Margin(s_InformationBoxLabelSpace, &MainView);
+	MainView.HSplitTop(static_cast<float>(TextLines) * s_PopupFontSize, &Label, &MainView);
+	MainView.HSplitBottom(27.0f, &MainView, &Buttons);
+	TextRender()->Text(nullptr, Label.x, Label.y, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
+	Buttons.VSplitLeft(MainView.w / 2.0f, &ButtonDeny, &ButtonAccept);
 
 	// buttons yes and no
+	PopupState State = PopupState::RENDER;
 	static CButtonContainer s_ButtonAccept;
-	ButtonAccept.VMargin(5.0f, &ButtonAccept);
+	ButtonAccept.Margin(5.0f, &ButtonAccept);
 	if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Yes", 0, &ButtonAccept))
-	{
-		if(pElemPopup->m_pCallback)
-			pElemPopup->m_pCallback(pCurrentWindow, true);
-	}
+		State = PopupState::YES;
 
 	static CButtonContainer s_ButtonDeny;
-	ButtonDeny.VMargin(5.0f, &ButtonDeny);
+	ButtonDeny.Margin(5.0f, &ButtonDeny);
 	if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonDeny, "No", 0, &ButtonDeny))
-	{
-		if(pElemPopup->m_pCallback)
-			pElemPopup->m_pCallback(pCurrentWindow, false);
-	}
+		State = PopupState::NO;
+
+	if(pElemPopup->m_pCallback)
+		pElemPopup->m_pCallback(MainView, pCurrentWindow, State);
 }

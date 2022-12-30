@@ -112,6 +112,7 @@ public:
 	bool Inside(float PointX, float PointY) const;
 
 	void Draw(ColorRGBA Color, int Corners, float Rounding) const;
+	void DrawMonochrome(ColorRGBA Color, int Corners, float Rounding) const;
 	void Draw4(ColorRGBA ColorTopLeft, ColorRGBA ColorTopRight, ColorRGBA ColorBottomLeft, ColorRGBA ColorBottomRight, int Corners, float Rounding) const;
 };
 

@@ -42,7 +42,7 @@ class CWindowUI
 
 	CWindowUI() = default;
 	~CWindowUI() = default;
-	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = WINDOWFLAG_DEFAULT);
+	CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence = nullptr, int WindowFlags = FLAG_DEFAULT);
 
 	void RenderWindowWithoutBordure();
 	void RenderDefaultWindow();
@@ -51,14 +51,15 @@ class CWindowUI
 public:
 	enum
 	{
-		WINDOWFLAG_POSITION_CENTER = 1 << 0, // default it's mouse position
+		FLAG_POSITION_CENTER = 1 << 0, // default it's mouse position
 
-		WINDOWFLAG_MINIMIZE = 1 << 1,
-		WINDOWFLAG_CLOSE = 1 << 2,
-		WINDOWFLAG_DEFAULT = WINDOWFLAG_MINIMIZE | WINDOWFLAG_CLOSE,
+		FLAG_MINIMIZE = 1 << 1,
+		FLAG_CLOSE = 1 << 2,
+		FLAG_DEFAULT = FLAG_MINIMIZE | FLAG_CLOSE,
+		FLAG_DEFAULT_CENTER = FLAG_DEFAULT | FLAG_POSITION_CENTER,
 
-		WINDOWFLAG_CLOSE_CLICKING_OUTSIDE = 1 << 3,
-		WINDOWFLAG_WITHOUT_BORDURE = 1 << 4,
+		FLAG_CLOSE_CLICKING_OUTSIDE = 1 << 3,
+		FLAG_WITHOUT_BORDURE = 1 << 4,
 	};
 
 	CWindowUI(const CWindowUI& pWindow) = delete;
@@ -73,7 +74,7 @@ public:
 		return pWindow;
 	}
 
-	CWindowUI *AddChild(const char *pName, vec2 WindowSize, int WindowFlags = WINDOWFLAG_DEFAULT);
+	CWindowUI *AddChild(const char *pName, vec2 WindowSize, int WindowFlags = FLAG_DEFAULT);
 
 	/*
 	 * Get child window
@@ -230,10 +231,6 @@ private:
 
 	bool IsRenderAllowed() const { return m_Openned && m_pCallback && (m_pRenderDependence == nullptr || (m_pRenderDependence && *m_pRenderDependence == true)); }
 	bool IsMoving() const { return m_Moving; }
-
-	// tools
-	void DrawUIRect(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const;
-	void DrawUIRectMonochrome(CUIRect *pRect, ColorRGBA Color, int Corner, float Rounding) const;
 };
 
 
