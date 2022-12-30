@@ -1,6 +1,7 @@
 #include "scoreworker.h"
-#include "base/system.h"
 
+#include <base/log.h>
+#include <base/system.h>
 #include <engine/server/databases/connection.h>
 #include <engine/server/databases/connection_pool.h>
 #include <engine/server/sql_string_helpers.h>
@@ -414,13 +415,20 @@ bool CScoreWorker::SaveScore(IDbConnection *pSqlServer, const ISqlData *pGameDat
 		pSqlServer->BindString(2, pData->m_aName);
 		pSqlServer->BindString(3, pData->m_aTimestamp);
 		pSqlServer->Print();
-		int NumInserted;
-		pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
+		int NumDeleted;
+		if(pSqlServer->ExecuteUpdate(&NumDeleted, pError, ErrorSize))
+		{
+			return true;
+		}
+		if(NumDeleted == 0)
+		{
+			log_warn("sql", "Rank got moved out of backup database, will show up as duplicate rank in MySQL");
+		}
 		return false;
 	}
 	if(w == Write::NORMAL_FAILED)
 	{
-		int NumInserted;
+		int NumUpdated;
 		// move to non-tmp table succeded. delete from backup again
 		str_format(aBuf, sizeof(aBuf),
 			"INSERT INTO %s_race SELECT * FROM %s_race_backup WHERE GameId=? AND Name=? AND Timestamp=%s",
@@ -433,7 +441,10 @@ bool CScoreWorker::SaveScore(IDbConnection *pSqlServer, const ISqlData *pGameDat
 		pSqlServer->BindString(2, pData->m_aName);
 		pSqlServer->BindString(3, pData->m_aTimestamp);
 		pSqlServer->Print();
-		pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
+		if(pSqlServer->ExecuteUpdate(&NumUpdated, pError, ErrorSize))
+		{
+			return true;
+		}
 
 		// move to non-tmp table succeded. delete from backup again
 		str_format(aBuf, sizeof(aBuf),
@@ -447,7 +458,14 @@ bool CScoreWorker::SaveScore(IDbConnection *pSqlServer, const ISqlData *pGameDat
 		pSqlServer->BindString(2, pData->m_aName);
 		pSqlServer->BindString(3, pData->m_aTimestamp);
 		pSqlServer->Print();
-		pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
+		if(pSqlServer->ExecuteUpdate(&NumUpdated, pError, ErrorSize))
+		{
+			return true;
+		}
+		if(NumUpdated == 0)
+		{
+			log_warn("sql", "Rank got moved out of backup database, will show up as duplicate rank in MySQL");
+		}
 		return false;
 	}
 
@@ -544,7 +562,7 @@ bool CScoreWorker::SaveTeamScore(IDbConnection *pSqlServer, const ISqlData *pGam
 	if(w == Write::NORMAL_SUCCEEDED)
 	{
 		str_format(aBuf, sizeof(aBuf),
-			"DELETE FROM %s_teamrace_backup WHERE GameId=?",
+			"DELETE FROM %s_teamrace_backup WHERE ID=?",
 			pSqlServer->GetPrefix());
 		if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		{
@@ -554,8 +572,17 @@ bool CScoreWorker::SaveTeamScore(IDbConnection *pSqlServer, const ISqlData *pGam
 		// copy uuid, because mysql BindBlob doesn't support const buffers
 		CUuid TeamrankId = pData->m_TeamrankUuid;
 		pSqlServer->BindBlob(1, TeamrankId.m_aData, sizeof(TeamrankId.m_aData));
-		int NumInserted;
-		return pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
+		pSqlServer->Print();
+		int NumDeleted;
+		if(pSqlServer->ExecuteUpdate(&NumDeleted, pError, ErrorSize))
+		{
+			return true;
+		}
+		if(NumDeleted == 0)
+		{
+			log_warn("sql", "Teamrank got moved out of backup database, will show up as duplicate teamrank in MySQL");
+		}
+		return false;
 	}
 	if(w == Write::NORMAL_FAILED)
 	{
@@ -563,26 +590,28 @@ bool CScoreWorker::SaveTeamScore(IDbConnection *pSqlServer, const ISqlData *pGam
 		CUuid TeamrankId = pData->m_TeamrankUuid;
 
 		str_format(aBuf, sizeof(aBuf),
-			"INSERT INTO %s_teamrace SELECT * FROM %s_teamrace_backup WHERE GameId=?",
+			"INSERT INTO %s_teamrace SELECT * FROM %s_teamrace_backup WHERE ID=?",
 			pSqlServer->GetPrefix(), pSqlServer->GetPrefix());
 		if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		{
 			return true;
 		}
 		pSqlServer->BindBlob(1, TeamrankId.m_aData, sizeof(TeamrankId.m_aData));
+		pSqlServer->Print();
 		if(pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize))
 		{
 			return true;
 		}
 
 		str_format(aBuf, sizeof(aBuf),
-			"DELETE FROM %s_teamrace_backup WHERE GameId=?",
+			"DELETE FROM %s_teamrace_backup WHERE ID=?",
 			pSqlServer->GetPrefix());
 		if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		{
 			return true;
 		}
 		pSqlServer->BindBlob(1, TeamrankId.m_aData, sizeof(TeamrankId.m_aData));
+		pSqlServer->Print();
 		return pSqlServer->ExecuteUpdate(&NumInserted, pError, ErrorSize);
 	}
 

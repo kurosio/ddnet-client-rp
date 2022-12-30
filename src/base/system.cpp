@@ -2657,7 +2657,7 @@ int str_format(char *buffer, int buffer_size, const char *format, ...)
 #if defined(CONF_FAMILY_WINDOWS)
 	va_list ap;
 	va_start(ap, format);
-	_vsnprintf(buffer, buffer_size, format, ap);
+	_vsprintf_p(buffer, buffer_size, format, ap);
 	va_end(ap);
 
 	buffer[buffer_size - 1] = 0; /* assure null termination */
@@ -2831,11 +2831,9 @@ int str_comp_filenames(const char *a, const char *b)
 	{
 		if(*a >= '0' && *a <= '9' && *b >= '0' && *b <= '9')
 		{
-			result = 0;
 			do
 			{
-				if(!result)
-					result = *a - *b;
+				result = *a - *b;
 				++a;
 				++b;
 			} while(*a >= '0' && *a <= '9' && *b >= '0' && *b <= '9');
@@ -2844,7 +2842,7 @@ int str_comp_filenames(const char *a, const char *b)
 				return 1;
 			else if(*b >= '0' && *b <= '9')
 				return -1;
-			else if(result)
+			else if(!(!result && *a && *b))
 				return result;
 		}
 
