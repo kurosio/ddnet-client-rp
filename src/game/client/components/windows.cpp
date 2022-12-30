@@ -148,7 +148,7 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 {
 	const int LineCount = TextRender()->TextLineCount(nullptr, s_MessageBoxFontSize, pMessage, Width);
 
-	MessageElemUI *pElement = CreateInformationBoxElement(Width, pMessage);
+	MessageElemUI *pElement = CreateInformationBoxElement(pMessage);
 	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)), pDepent);
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderInfoWindow, this));
 	if(!pElement->m_pWindow->IsOpenned())
@@ -161,7 +161,7 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 {
 	const int LineCount = TextRender()->TextLineCount(nullptr, s_MessageBoxFontSize, pMessage, Width);
 
-	MessageElemUI *pElement = CreateInformationBoxElement(Width, pMessage);
+	MessageElemUI *pElement = CreateInformationBoxElement(pMessage);
 	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)));
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderInfoWindow, this));
 	if(!pElement->m_pWindow->IsOpenned())
