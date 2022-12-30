@@ -2497,18 +2497,20 @@ void CMenus::OnRender()
 			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Popka test", 0, &Button))
 			{
 				// create popup message after clicked DoButtonMenu and update children
-				m_pClient->m_Windows.CreatePopupBox("Popka4214", 200, "aDKSAodko askdo askfoakpsfokSAOP FKPOASfk aspofkapsofk pasokfpoas kop?", [this](CWindowUI *pPopupWindow, bool ButtonYes) 
-				{
-					if(ButtonYes)
+				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "Popka4214", 200, 0, "aDKSAodko askdo askfoakpsfokSAOP FKPOASfk aspofkapsofk pasokfpoas kop?", 
+					[this](CUIRect, class CWindowUI *pPopupWin, PopupState State) 
 					{
-						// create information box after clicked Button Yes from popup and update children
-						m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "sa jiofIOA JFIOASJFoi wqjfio qwjfiowqjiofwqjio fiwqjf 9ijiowqej f9012j f9ij2cf 1jf09 12ijfioqwjf oiqwjf iowqjf oiqwjfio wqjfiowqj iofjqwio fjwqiof jqwiof jqiowfj qwoijf iowqjf oiqwjfio qwjfio wqjfoi jwqiof jwqiof joi21j9f j209f jweiofqjqwiofj wqiofj iwqojf ioqwjf iowqjfiowqj fiowqif ", pPopupWindow);
-						return;
-					}
-
-					// close for button NO
-					pPopupWindow->Close();
-				}, pWindow);
+						if(State == PopupState::YES)
+						{
+							// create information box after clicked Button Yes from popup and update children
+							m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "sa jiofIOA JFIOASJFoi wqjfio qwjfiowqjiofwqjio fiwqjf 9ijiowqej f9012j f9ij2cf 1jf09 12ijfioqwjf oiqwjf iowqjf oiqwjfio wqjfiowqj iofjqwio fjwqiof jqwiof jqiowfj qwoijf iowqjf oiqwjfio qwjfio wqjfoi jwqiof jwqiof joi21j9f j209f jweiofqjqwiofj wqiofj iwqojf ioqwjf iowqjfiowqj fiowqif ", pPopupWin);
+						}
+						else if(State == PopupState::NO)
+						{
+							// close for button NO
+							pPopupWin->Close();
+						}
+					}, pWindow);
 			}
 		});
 
