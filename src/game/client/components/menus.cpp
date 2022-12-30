@@ -2494,21 +2494,28 @@ void CMenus::OnRender()
 
 			static CButtonContainer s_ButtonAccept;
 			Button.VMargin(5.0f, &Button);
-			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Popka test", 0, &Button))
+			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Open child window", 0, &Button))
 			{
 				// create popup message after clicked DoButtonMenu and update children
-				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "Popka4214", 200, 0, "aDKSAodko askdo askfoakpsfokSAOP FKPOASfk aspofkapsofk pasokfpoas kop?", 
+				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "Popup1", 200, 0, "Test popup window how child window", 
 					[this](CUIRect, class CWindowUI *pPopupWin, PopupState State) 
 					{
 						if(State == PopupState::YES)
 						{
 							// create information box after clicked Button Yes from popup and update children
-							m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "sa jiofIOA JFIOASJFoi wqjfio qwjfiowqjiofwqjio fiwqjf 9ijiowqej f9012j f9ij2cf 1jf09 12ijfioqwjf oiqwjf iowqjf oiqwjfio wqjfiowqj iofjqwio fjwqiof jqwiof jqiowfj qwoijf iowqjf oiqwjfio qwjfio wqjfoi jwqiof jwqiof joi21j9f j209f jweiofqjqwiofj wqiofj iwqojf ioqwjf iowqjfiowqj fiowqif ", pPopupWin);
+							m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "Create child child window infobox ", pPopupWin);
 						}
 						else if(State == PopupState::NO)
 						{
 							// close for button NO
-							pPopupWin->Close();
+							//pPopupWin->Close();
+							m_pClient->m_Windows.CreatePopupBox(
+								CWindowUI::FLAG_DEFAULT, "Popup2 (NO)", 300, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin, PopupState State) {
+									if(State == PopupState::YES)
+									{
+										m_pClient->m_Windows.CreateInformationBox("Sub sub info box", 400.0f, "Hello friend!", pPopupWin);
+									}
+								}, pPopupWin);
 						}
 					}, pWindow);
 			}

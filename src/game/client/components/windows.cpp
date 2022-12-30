@@ -252,9 +252,5 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 	if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonDeny, "No", 0, &ButtonDeny))
 		State = PopupState::NO;
 
-	if(pElemPopup->m_pCallback)
-	{
-		State = PopupState::RENDER;
-		pElemPopup->m_pCallback(MainView, pCurrentWindow, State);
-	}
+	pElemPopup->m_pCallback(MainView, pCurrentWindow, State);
 }
