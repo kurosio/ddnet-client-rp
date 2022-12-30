@@ -36,7 +36,7 @@ struct MessageElemUI : BaseElemUI
 class CWindowController : public CComponent
 {
 	PopupElemUI *CreatePopupElement(const char *pMessage, PopupWindowCallback Callback) const;
-	MessageElemUI *CreateInformationBoxElement(float Width, const char *pMessage) const;
+	MessageElemUI *CreateInformationBoxElement(const char *pMessage) const;
 	void CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *pCurrentWindow);
 	void CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pCurrentWindow);
 

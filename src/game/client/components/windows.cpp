@@ -116,7 +116,8 @@ template<class T, std::enable_if_t<std::is_convertible_v<T *, BaseElemUI *>, boo
 static void UpdateElement(std::vector<BaseElemUI *> &paElements, T *pElement)
 {
 	const char *pName = pElement->m_pWindow->GetWindowName();
-	const auto pItem = std::find_if(paElements.begin(), paElements.end(), [pName](const BaseElemUI *p) {
+	const auto pItem = std::find_if(paElements.begin(), paElements.end(), [pName](const BaseElemUI *p) 
+	{
 		return str_comp(pName, p->m_pWindow->GetWindowName()) == 0;
 	});
 
@@ -133,7 +134,7 @@ static void UpdateElement(std::vector<BaseElemUI *> &paElements, T *pElement)
  * Information	Box                                             |     UI
  * ===================================================================== */
 constexpr float s_MessageBoxFontSize = 10.0f;
-MessageElemUI *CWindowController::CreateInformationBoxElement(float Width, const char *pMessage) const
+MessageElemUI *CWindowController::CreateInformationBoxElement(const char *pMessage) const
 {
 	const CUIRect *pScreen = UI()->Screen();
 	Graphics()->MapScreen(pScreen->x, pScreen->y, pScreen->w, pScreen->h);
