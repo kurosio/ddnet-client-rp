@@ -2464,56 +2464,56 @@ void CMenus::OnRender()
 	/*
 	 * TEST WINDOWS SYSTEM FOR SOME TIME
 	 */
-	if(CWindowUI *pPiskaWin = UI()->GetWindow("Piska1"); !pPiskaWin)
+	if(CWindowUI *pPiskaWin = UI()->GetWindow("Category"); !pPiskaWin)
 	{
+		// This intilized only one time
+
 		// create window
-		pPiskaWin = UI()->CreateWindow("Piska1", vec2(200, 200), &m_MenuActive);
+		pPiskaWin = UI()->CreateWindow("Category", vec2(200, 200), &m_MenuActive);
 
 		// register callback
-		pPiskaWin->Register([this](CUIRect MainView, CWindowUI *pWindow) 
-		{
+		pPiskaWin->Register([this](CUIRect MainView, CWindowUI *pWindow) {
 			CUIRect Button{};
 			MainView.HSplitTop(24.0f, &Button, &MainView);
 
 			static int CheckBoxTest = 0;
-			if(CWindowUI *pChild = pWindow->GetChild("Child"); DoButton_CheckBox(&CheckBoxTest, "Test open Child window", pChild->IsOpenned(), &Button))
+			if(CWindowUI *pChild = pWindow->GetChild("C1"); DoButton_CheckBox(&CheckBoxTest, "Open lower the branch below", pChild->IsOpenned(), &Button))
 				pChild->Reverse();
 		});
 
 		// create child and register callback render
-		pPiskaWin->AddChild("Child", vec2(300, 100))->Register([this](CUIRect MainView, CWindowUI *pWindow) 
-		{
+		pPiskaWin->AddChild("C1", vec2(300, 100))->Register([this](CUIRect MainView, CWindowUI *pWindow) {
 			// set color tone
-			pWindow->SetColorTone(ColorHSLA(582533173, true));
+			vec4 Color = ColorHSLA(g_Config.m_ClBackgroundColor, true);
+			Color.a = 0.9f;
+			pWindow->SetColorTone(Color);
 
 			// some render functions
-			UI()->DoLabel(&MainView, "SDkosad kosakdo askdo sak", 12.0f, TEXTALIGN_CENTER);
+			UI()->DoLabel(&MainView, "Child window with color tone and flags.", 12.0f, TEXTALIGN_CENTER);
 
 			CUIRect Button{};
 			MainView.HSplitTop(24.0f, &Button, &MainView);
 
 			static CButtonContainer s_ButtonAccept;
 			Button.VMargin(5.0f, &Button);
-			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Open child window", 0, &Button))
-			{
+			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Open popup binary child", 0, &Button)){
 				// create popup message after clicked DoButtonMenu and update children
-				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "Popup1", 200, 0, "Test popup window how child window", 
-					[this](CUIRect, class CWindowUI *pPopupWin1, PopupState PState1) 
+				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "P1", 200, 0, "Test popup window how child binary window.", 
+					[this](CUIRect, CWindowUI *pPopupWin1, PopupState PState1) 
 					{
-						if(PState1 == PopupState::YES)
-						{
+						if(PState1 == PopupState::YES){
 							// create information box after clicked Button Yes from popup and update children
-							m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "Create child child window infobox ", pPopupWin1);
+							m_pClient->m_Windows.CreateInformationBox("PYES", 400.0f, "Information box for some BUTTON-YES ", pPopupWin1);
 						}
-						else if(PState1 == PopupState::NO)
-						{
+						else if(PState1 == PopupState::NO){
 							// close for button NO
-							//pPopupWin->Close();
 							m_pClient->m_Windows.CreatePopupBox(
-								CWindowUI::FLAG_DEFAULT, "Popup2 (NO)", 300, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin2, PopupState PState2) {
-									if(PState2 == PopupState::YES)
-									{
-										m_pClient->m_Windows.CreateInformationBox("Sub sub info box", 400.0f, "Hello friend!", pPopupWin2);
+								CWindowUI::FLAG_DEFAULT, "PNO", 360, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin2, PopupState PState2) {
+									if(PState2 == PopupState::YES){
+										m_pClient->m_Windows.CreateInformationBox("About button", 400.0f, "BUTTON-YES", pPopupWin2);
+									}
+									else if(PState2 == PopupState::NO){
+										m_pClient->m_Windows.CreateInformationBox("About button", 400.0f, "BUTTON-NO", pPopupWin2);
 									}
 								}, pPopupWin1);
 						}
