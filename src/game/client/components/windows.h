@@ -2,6 +2,7 @@
 #define GAME_CLIENT_COMPONENTS_WINDOWS_H
 #include <game/client/component.h>
 
+#include <memory>
 #include <vector>
 
 /*
@@ -11,8 +12,6 @@
 
 struct BaseElemUI
 {
-	virtual ~BaseElemUI() = default;
-
 	class CWindowUI *m_pWindow{};
 };
 
@@ -23,19 +22,14 @@ struct PopupElemUI : BaseElemUI
 {
 	PopupElemUI()
 	{
-		m_pButtonYes = new CButtonContainer;
-		m_pButtonNo = new CButtonContainer;
-	}
-	~PopupElemUI() override
-	{
-		delete m_pButtonYes;
-		delete m_pButtonNo;
+		m_pButtonYes = std::make_shared<CButtonContainer>();
+		m_pButtonNo = std::make_shared<CButtonContainer>();
 	}
 
 	char m_aTextPopup[1024]{};
 	PopupWindowCallback m_pCallback{};
-	CButtonContainer *m_pButtonYes{};
-	CButtonContainer *m_pButtonNo{};
+	std::shared_ptr<CButtonContainer> m_pButtonYes{};
+	std::shared_ptr<CButtonContainer> m_pButtonNo{};
 };
 
 // message
@@ -43,15 +37,11 @@ struct MessageElemUI : BaseElemUI
 {
 	MessageElemUI()
 	{
-		m_pButtonOk = new CButtonContainer;
-	}
-	~MessageElemUI() override
-	{
-		delete m_pButtonOk;
+		m_pButtonOk = std::make_shared<CButtonContainer>();
 	}
 
 	char m_aMessageText[2048]{};
-	CButtonContainer *m_pButtonOk;
+	std::shared_ptr<CButtonContainer> m_pButtonOk{};
 };
 
 /*
