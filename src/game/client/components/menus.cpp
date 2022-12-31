@@ -2498,24 +2498,24 @@ void CMenus::OnRender()
 			{
 				// create popup message after clicked DoButtonMenu and update children
 				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "Popup1", 200, 0, "Test popup window how child window", 
-					[this](CUIRect, class CWindowUI *pPopupWin, PopupState State) 
+					[this](CUIRect, class CWindowUI *pPopupWin1, PopupState PState1) 
 					{
-						if(State == PopupState::YES)
+						if(PState1 == PopupState::YES)
 						{
 							// create information box after clicked Button Yes from popup and update children
-							m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "Create child child window infobox ", pPopupWin);
+							m_pClient->m_Windows.CreateInformationBox("Info box", 400.0f, "Create child child window infobox ", pPopupWin1);
 						}
-						else if(State == PopupState::NO)
+						else if(PState1 == PopupState::NO)
 						{
 							// close for button NO
 							//pPopupWin->Close();
 							m_pClient->m_Windows.CreatePopupBox(
-								CWindowUI::FLAG_DEFAULT, "Popup2 (NO)", 300, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin, PopupState State) {
-									if(State == PopupState::YES)
+								CWindowUI::FLAG_DEFAULT, "Popup2 (NO)", 300, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin2, PopupState PState2) {
+									if(PState2 == PopupState::YES)
 									{
-										m_pClient->m_Windows.CreateInformationBox("Sub sub info box", 400.0f, "Hello friend!", pPopupWin);
+										m_pClient->m_Windows.CreateInformationBox("Sub sub info box", 400.0f, "Hello friend!", pPopupWin2);
 									}
-								}, pPopupWin);
+								}, pPopupWin1);
 						}
 					}, pWindow);
 			}
