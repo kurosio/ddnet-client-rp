@@ -180,8 +180,7 @@ void CWindowController::CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pC
 	Label.HSplitBottom(24.0f, &Label, &ButtonOk);
 	TextRender()->Text(nullptr, Label.x, Label.y, 10.0f, pElemPopup->m_aMessageText, MainView.w);
 
-	static CButtonContainer s_ButtonOk;
-	if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonOk, "Ok", false, &ButtonOk, nullptr))
+	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonOk, "Ok", false, &ButtonOk, nullptr))
 		pCurrentWindow->Close();
 }
 
@@ -242,14 +241,12 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 
 	// buttons yes and no
 	PopupState State = PopupState::RENDER;
-	static CButtonContainer s_ButtonAccept;
 	ButtonAccept.Margin(5.0f, &ButtonAccept);
-	if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Yes", 0, &ButtonAccept))
+	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonYes, "Yes", 0, &ButtonAccept))
 		State = PopupState::YES;
 
-	static CButtonContainer s_ButtonDeny;
 	ButtonDeny.Margin(5.0f, &ButtonDeny);
-	if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonDeny, "No", 0, &ButtonDeny))
+	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonNo, "No", 0, &ButtonDeny))
 		State = PopupState::NO;
 
 	pElemPopup->m_pCallback(MainView, pCurrentWindow, State);

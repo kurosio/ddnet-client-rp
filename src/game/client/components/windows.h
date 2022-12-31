@@ -11,6 +11,8 @@
 
 struct BaseElemUI
 {
+	virtual ~BaseElemUI() = default;
+
 	class CWindowUI *m_pWindow{};
 };
 
@@ -19,14 +21,37 @@ enum class PopupState : int { RENDER, YES, NO };
 using PopupWindowCallback = std::function<void(CUIRect MainView, class CWindowUI *, PopupState)>;
 struct PopupElemUI : BaseElemUI
 {
+	PopupElemUI()
+	{
+		m_pButtonYes = new CButtonContainer;
+		m_pButtonNo = new CButtonContainer;
+	}
+	~PopupElemUI() override
+	{
+		delete m_pButtonYes;
+		delete m_pButtonNo;
+	}
+
 	char m_aTextPopup[1024]{};
 	PopupWindowCallback m_pCallback{};
+	CButtonContainer *m_pButtonYes{};
+	CButtonContainer *m_pButtonNo{};
 };
 
 // message
 struct MessageElemUI : BaseElemUI
 {
+	MessageElemUI()
+	{
+		m_pButtonOk = new CButtonContainer;
+	}
+	~MessageElemUI() override
+	{
+		delete m_pButtonOk;
+	}
+
 	char m_aMessageText[2048]{};
+	CButtonContainer *m_pButtonOk;
 };
 
 /*
