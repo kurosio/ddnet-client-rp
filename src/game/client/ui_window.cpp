@@ -79,9 +79,9 @@ void CWindowUI::RenderDefaultWindow()
 			Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
 		}
 	}
-	
+
 	/*
-	 * Bordure draw
+	 * Bordure background
 	 */
 	{
 		const float BordureFade = m_pUI->GetFade(&m_BordureRect, IsActiveWindow);
@@ -90,49 +90,6 @@ void CWindowUI::RenderDefaultWindow()
 	}
 
 	/*
-	 * Window name
-	 */
-	CUIRect Label{};
-	m_BordureRect.VSplitLeft(10.0f, 0, &Label);
-	m_pUI->DoLabel(&Label, m_aName, s_FontSize, TEXTALIGN_LEFT);
-	
-	/*
-	 * Button bordure top func
-	 */
-	bool DissalowWindowMoving = false;
-	auto CreateButtonTop = [&](CUIRect* pButtonRect, const char* pHintStr, vec4 ColorFade1, vec4 ColorFade2, const char* pSymbolUTF) -> bool
-	{
-		CUIRect Button = *(pButtonRect);
-		const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));
-		Button.DrawMonochrome(ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, s_Rounding);
-		m_pUI->DoLabel(&Button, pSymbolUTF, s_FontSize, TEXTALIGN_CENTER);
-		pButtonRect->x -= 24.f;
-
-		bool Active = false;
-		if(IsActiveWindow && m_pUI->MouseHovered(&Button))
-		{
-			constexpr float FontSizeHint = 8.0f;
-			const char* HotKeyLabel = Localize(pHintStr);
-			const float TextWidth = m_pUI->TextRender()->TextWidth(FontSizeHint, HotKeyLabel, -1, -1.0f);
-
-			CUIRect BackgroundKeyPress = {m_pUI->MouseX(), m_pUI->MouseY(), 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin};
-			m_pUI->RectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
-			BackgroundKeyPress.Draw(vec4(0.1f, 0.1f, 0.1f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
-
-			CUIRect LabelKeyInfo = BackgroundKeyPress;
-			LabelKeyInfo.Margin(s_BackgroundMargin, &LabelKeyInfo);
-			m_pUI->DoLabel(&LabelKeyInfo, HotKeyLabel, FontSizeHint, TEXTALIGN_CENTER);
-
-			Active = m_pUI->Input()->KeyPress(KEY_MOUSE_1);
-		}
-
-		if(Active)
-			DissalowWindowMoving = true;
-
-		return Active;
-	};
-	
-	/*
 	 * Callback func
 	 */
 	if(!m_Minimized && m_pCallback)
@@ -140,32 +97,75 @@ void CWindowUI::RenderDefaultWindow()
 		Workspace.Margin(s_BackgroundMargin, &Workspace);
 		m_pCallback(Workspace, this);
 	}
-
+		
 	/*
-	 * Buttons
+	 * Bordure top
 	 */
+	bool DissalowWindowMoving = false;
 	{
+		// Lambda Bordure buttons function
+		auto CreateButtonTop = [&](int *pCounter, CUIRect *pButtonRect, const char *pHintStr, vec4 ColorFade1, vec4 ColorFade2, const char *pSymbolUTF) -> bool {
+			CUIRect Button = *(pButtonRect);
+			const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));
+			Button.DrawMonochrome(ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, s_Rounding);
+			m_pUI->DoLabel(&Button, pSymbolUTF, s_FontSize, TEXTALIGN_CENTER);
+			pButtonRect->x -= 24.f;
+			if(pCounter)
+				*pCounter += 1;
+
+			bool Active = false;
+			if(IsActiveWindow && m_pUI->MouseHovered(&Button))
+			{
+				constexpr float FontSizeHint = 8.0f;
+				const char *HotKeyLabel = Localize(pHintStr);
+				const float TextWidth = m_pUI->TextRender()->TextWidth(FontSizeHint, HotKeyLabel, -1, -1.0f);
+
+				CUIRect BackgroundKeyPress = {m_pUI->MouseX(), m_pUI->MouseY(), 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin};
+				m_pUI->RectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
+				BackgroundKeyPress.Draw(vec4(0.1f, 0.1f, 0.1f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+
+				CUIRect LabelKeyInfo = BackgroundKeyPress;
+				LabelKeyInfo.Margin(s_BackgroundMargin, &LabelKeyInfo);
+				m_pUI->DoLabel(&LabelKeyInfo, HotKeyLabel, FontSizeHint, TEXTALIGN_CENTER);
+
+				Active = m_pUI->Input()->KeyPress(KEY_MOUSE_1);
+			}
+
+			if(Active)
+				DissalowWindowMoving = true;
+
+			return Active;
+		};
+
+		// Bordure top
+		int ButtonsNum = 0;
 		CUIRect ButtonTop{};
 		m_BordureRect.VSplitRight(24.0f, nullptr, &ButtonTop);
 
 		// close button
-		if(m_Flags & FLAG_CLOSE && CreateButtonTop(&ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
+		if(m_Flags & FLAG_CLOSE && CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
 			Close();
 
 		// minimize button
-		if(m_Flags & FLAG_MINIMIZE && CreateButtonTop(&ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
+		if(m_Flags & FLAG_MINIMIZE && CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
 			MinimizeWindow();
 
 		// helppage button
 		if(m_pCallbackHelp)
 		{
 			CWindowUI* pWindowHelppage = GetChild("Help");
-			if(CreateButtonTop(&ButtonTop, "Show attached help.", pWindowHelppage->IsOpenned() ? vec4(0.1f, 0.3f, 0.1f, 0.75f) : vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.5f, 0.2f, 0.75f), "?"))
+			if(CreateButtonTop(&ButtonsNum, &ButtonTop, "Show attached help.", pWindowHelppage->IsOpenned() ? vec4(0.1f, 0.3f, 0.1f, 0.75f) : vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.5f, 0.2f, 0.75f), "?"))
 			{
 				pWindowHelppage->Register(m_pCallbackHelp);
 				pWindowHelppage->Reverse();
 			}
 		}
+
+		// Window name
+		CUIRect Label{};
+		dbg_msg("test", "%d", ButtonsNum);
+		m_BordureRect.VSplitRight(ButtonTop.w * static_cast<float>(ButtonsNum), &Label, 0);
+		m_pUI->DoLabel(&Label, m_aName, s_FontSize, TEXTALIGN_LEFT);
 	}
 
 	/*

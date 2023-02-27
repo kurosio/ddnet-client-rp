@@ -2461,12 +2461,12 @@ void CMenus::OnRender()
 			MainView.HSplitTop(24.0f, &Button, &MainView);
 
 			static int CheckBoxTest = 0;
-			if(CWindowUI *pChild = pWindow->GetChild("C1"); DoButton_CheckBox(&CheckBoxTest, "Open lower the branch below", pChild->IsOpenned(), &Button))
+			if(CWindowUI *pChild = pWindow->GetChild("C1 gyugdsada uy"); DoButton_CheckBox(&CheckBoxTest, "Open lower the branch below", pChild->IsOpenned(), &Button))
 				pChild->Reverse();
 		});
 
 		// create child and register callback render
-		CWindowUI* pChild = pPiskaWin->AddChild("C1", vec2(300, 100));
+		CWindowUI* pChild = pPiskaWin->AddChild("C1 gyugdsada uy", vec2(300, 100));
 		pChild->SetColorTone(ColorHSLA(g_Config.m_ClBackgroundColor, true));
 		pChild->Register([this](CUIRect MainView, CWindowUI *pWindow)
 		{
