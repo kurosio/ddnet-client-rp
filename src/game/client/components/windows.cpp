@@ -17,11 +17,13 @@
 
 CWindowController::~CWindowController()
 {
+	// free elements
 	for(auto *pElement : m_aElements)
 		delete pElement;
 	for(auto *pWindow : CWindowUI::ms_aWindows)
 		delete pWindow;
 
+	// clear
 	m_aElements.clear();
 	CWindowUI::ms_aWindows.clear();
 }
@@ -34,9 +36,11 @@ void CWindowController::OnRender()
 
 	// render cursor
 	if(ShowCursor)
+	{
 		RenderTools()->RenderCursor(vec2(UI()->MouseX(), UI()->MouseY()), 24.f);
+	}
 
-	// finish all checks button logics
+	// finish all checks buttons logics
 	UI()->FinishCheck();
 }
 
@@ -47,12 +51,14 @@ bool CWindowController::OnInput(IInput::CEvent Event)
 	{
 		if(CWindowUI *pWindowActive = CWindowUI::GetActiveWindow(); pWindowActive)
 		{
+			// close LCTRL + Q
 			if((pWindowActive->m_Flags & CWindowUI::FLAG_CLOSE) && Input()->KeyPress(KEY_Q))
 			{
 				pWindowActive->Close();
 				return true;
 			}
 
+			// minimize LCTRL + M
 			if((pWindowActive->m_Flags & CWindowUI::FLAG_MINIMIZE) && Input()->KeyPress(KEY_M))
 			{
 				pWindowActive->MinimizeWindow();
