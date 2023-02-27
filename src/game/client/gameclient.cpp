@@ -229,7 +229,7 @@ void CGameClient::OnInit()
 
 	m_pGraphics = Kernel()->RequestInterface<IGraphics>();
 
-	m_pGraphics->AddWindowResizeListener(OnWindowResizeCB, this);
+	m_pGraphics->AddWindowResizeListener([this] { OnWindowResize(); });
 
 	// propagate pointers
 	m_UI.Init(Kernel());
@@ -815,18 +815,10 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 
 		for(i = 0; i < MAX_CLIENTS; i++)
 		{
-			int Team = pUnpacker->GetInt();
-			bool WentWrong = false;
-
-			if(pUnpacker->Error())
-				WentWrong = true;
-
-			if(!WentWrong && Team >= TEAM_FLOCK && Team <= TEAM_SUPER)
+			const int Team = pUnpacker->GetInt();
+			if(!pUnpacker->Error() && Team >= TEAM_FLOCK && Team <= TEAM_SUPER)
 				m_Teams.Team(i, Team);
 			else
-				WentWrong = true;
-
-			if(WentWrong)
 			{
 				m_Teams.Team(i, 0);
 				break;
@@ -888,6 +880,17 @@ void CGameClient::OnStartGame()
 	m_Statboard.OnReset();
 }
 
+void CGameClient::OnStartRound()
+{
+	// In GamePaused or GameOver state RoundStartTick is updated on each tick
+	// hence no need to reset stats until player leaves GameOver
+	// and it would be a mistake to reset stats after or during the pause
+	m_Statboard.OnReset();
+
+	// Restart automatic race demo recording
+	m_RaceDemo.OnReset();
+}
+
 void CGameClient::OnFlagGrab(int TeamID)
 {
 	if(TeamID == TEAM_RED)
@@ -903,12 +906,6 @@ void CGameClient::OnWindowResize()
 
 	UI()->OnWindowResize();
 	TextRender()->OnWindowResize();
-}
-
-void CGameClient::OnWindowResizeCB(void *pUser)
-{
-	CGameClient *pClient = (CGameClient *)pUser;
-	pClient->OnWindowResize();
 }
 
 void CGameClient::OnLanguageChange()
@@ -1409,14 +1406,10 @@ void CGameClient::OnNewSnapshot()
 					OnGameOver();
 				else if(s_GameOver && !CurrentTickGameOver)
 					OnStartGame();
-				// Reset statboard when new round is started (RoundStartTick changed)
+				// Handle case that a new round is started (RoundStartTick changed)
 				// New round is usually started after `restart` on server
-				if(m_Snap.m_pGameInfoObj->m_RoundStartTick != m_LastRoundStartTick
-					// In GamePaused or GameOver state RoundStartTick is updated on each tick
-					// hence no need to reset stats until player leaves GameOver
-					// and it would be a mistake to reset stats after or during the pause
-					&& !(CurrentTickGameOver || m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED || s_GamePaused))
-					m_Statboard.OnReset();
+				if(m_Snap.m_pGameInfoObj->m_RoundStartTick != m_LastRoundStartTick && !(CurrentTickGameOver || m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED || s_GamePaused))
+					OnStartRound();
 				m_LastRoundStartTick = m_Snap.m_pGameInfoObj->m_RoundStartTick;
 				s_GameOver = CurrentTickGameOver;
 				s_GamePaused = (bool)(m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED);
@@ -1696,7 +1689,7 @@ void CGameClient::OnNewSnapshot()
 		Msg.m_X = x;
 		Msg.m_Y = y;
 		Client()->ChecksumData()->m_Zoom = ZoomToSend;
-		CMsgPacker Packer(Msg.MsgID(), false);
+		CMsgPacker Packer(&Msg);
 		Msg.Pack(&Packer);
 		if(ZoomToSend != m_LastZoom)
 			Client()->SendMsg(IClient::CONN_MAIN, &Packer, MSGFLAG_VITAL);
@@ -2101,7 +2094,7 @@ void CGameClient::SendInfo(bool Start)
 		Msg.m_UseCustomColor = g_Config.m_ClPlayerUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClPlayerColorBody;
 		Msg.m_ColorFeet = g_Config.m_ClPlayerColorFeet;
-		CMsgPacker Packer(Msg.MsgID(), false);
+		CMsgPacker Packer(&Msg);
 		Msg.Pack(&Packer);
 		Client()->SendMsg(IClient::CONN_MAIN, &Packer, MSGFLAG_VITAL);
 		m_aCheckInfo[0] = -1;
@@ -2116,7 +2109,7 @@ void CGameClient::SendInfo(bool Start)
 		Msg.m_UseCustomColor = g_Config.m_ClPlayerUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClPlayerColorBody;
 		Msg.m_ColorFeet = g_Config.m_ClPlayerColorFeet;
-		CMsgPacker Packer(Msg.MsgID(), false);
+		CMsgPacker Packer(&Msg);
 		Msg.Pack(&Packer);
 		Client()->SendMsg(IClient::CONN_MAIN, &Packer, MSGFLAG_VITAL);
 		m_aCheckInfo[0] = Client()->GameTickSpeed();
@@ -2135,7 +2128,7 @@ void CGameClient::SendDummyInfo(bool Start)
 		Msg.m_UseCustomColor = g_Config.m_ClDummyUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClDummyColorBody;
 		Msg.m_ColorFeet = g_Config.m_ClDummyColorFeet;
-		CMsgPacker Packer(Msg.MsgID(), false);
+		CMsgPacker Packer(&Msg);
 		Msg.Pack(&Packer);
 		Client()->SendMsg(IClient::CONN_DUMMY, &Packer, MSGFLAG_VITAL);
 		m_aCheckInfo[1] = -1;
@@ -2150,7 +2143,7 @@ void CGameClient::SendDummyInfo(bool Start)
 		Msg.m_UseCustomColor = g_Config.m_ClDummyUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClDummyColorBody;
 		Msg.m_ColorFeet = g_Config.m_ClDummyColorFeet;
-		CMsgPacker Packer(Msg.MsgID(), false);
+		CMsgPacker Packer(&Msg);
 		Msg.Pack(&Packer);
 		Client()->SendMsg(IClient::CONN_DUMMY, &Packer, MSGFLAG_VITAL);
 		m_aCheckInfo[1] = Client()->GameTickSpeed();

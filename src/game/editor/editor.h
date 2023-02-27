@@ -153,6 +153,8 @@ public:
 	virtual void BrushFlipY() {}
 	virtual void BrushRotate(float Amount) {}
 
+	virtual bool IsEntitiesLayer() const { return false; }
+
 	virtual void Render(bool Tileset = false) {}
 	virtual int RenderProperties(CUIRect *pToolbox) { return 0; }
 
@@ -312,7 +314,7 @@ public:
 
 	IGraphics::CTextureHandle m_Texture;
 	int m_External;
-	char m_aName[128];
+	char m_aName[IO_MAX_PATH_LENGTH];
 	unsigned char m_aTileFlags[256];
 	class CAutoMapper m_AutoMapper;
 };
@@ -335,7 +337,7 @@ public:
 	~CEditorSound();
 
 	int m_SoundID;
-	char m_aName[128];
+	char m_aName[IO_MAX_PATH_LENGTH];
 
 	void *m_pData;
 	unsigned m_DataSize;
@@ -373,10 +375,10 @@ public:
 		char m_aCreditsTmp[128];
 		char m_aLicenseTmp[32];
 
-		char m_aAuthor[32];
-		char m_aVersion[16];
-		char m_aCredits[128];
-		char m_aLicense[32];
+		char m_aAuthor[sizeof(m_aAuthorTmp)];
+		char m_aVersion[sizeof(m_aVersionTmp)];
+		char m_aCredits[sizeof(m_aCreditsTmp)];
+		char m_aLicense[sizeof(m_aLicenseTmp)];
 
 		void Reset()
 		{
@@ -411,6 +413,9 @@ public:
 	}
 
 	void DeleteEnvelope(int Index);
+	void SwapEnvelopes(int Index0, int Index1);
+	template<typename F>
+	void VisitEnvelopeReferences(F &&Visitor);
 
 	CLayerGroup *NewGroup()
 	{
@@ -608,6 +613,8 @@ public:
 	void Snap(CUIRect *pRect);
 	void Clamp(RECTi *pRect);
 
+	virtual bool IsEntitiesLayer() const override;
+
 	virtual bool IsEmpty(CLayerTiles *pLayer);
 	void BrushSelecting(CUIRect Rect) override;
 	int BrushGrab(CLayerGroup *pBrush, CUIRect Rect) override;
@@ -770,8 +777,8 @@ public:
 
 		m_BrushColorEnabled = true;
 
-		m_aFileName[0] = 0;
-		m_aFileSaveName[0] = 0;
+		m_aFileName[0] = '\0';
+		m_aFileSaveName[0] = '\0';
 		m_ValidSaveFilename = false;
 
 		m_PopupEventActivated = false;
@@ -779,20 +786,18 @@ public:
 		m_MouseInsidePopup = false;
 
 		m_FileDialogStorageType = 0;
+		m_FileDialogLastPopulatedStorageType = 0;
 		m_pFileDialogTitle = nullptr;
 		m_pFileDialogButtonText = nullptr;
 		m_pFileDialogUser = nullptr;
-		m_aFileDialogFileName[0] = 0;
-		m_aFileDialogCurrentFolder[0] = 0;
-		m_aFileDialogCurrentLink[0] = 0;
+		m_aFileDialogFileName[0] = '\0';
+		m_aFileDialogCurrentFolder[0] = '\0';
+		m_aFileDialogCurrentLink[0] = '\0';
+		m_aFilesSelectedName[0] = '\0';
+		m_aFileDialogFilterString[0] = '\0';
 		m_pFileDialogPath = m_aFileDialogCurrentFolder;
-		m_FileDialogActivate = false;
 		m_FileDialogOpening = false;
-		m_FileDialogScrollValue = 0.0f;
 		m_FilesSelectedIndex = -1;
-		m_FilesStartAt = 0;
-		m_FilesCur = 0;
-		m_FilesStopAt = 999;
 
 		m_SelectEntitiesImage = "DDNet";
 
@@ -867,7 +872,8 @@ public:
 
 	CLayerGroup *m_apSavedBrushes[10];
 
-	void FilelistPopulate(int StorageType);
+	void RefreshFilteredFileList();
+	void FilelistPopulate(int StorageType, bool KeepSelection = false);
 	void InvokeFileDialog(int StorageType, int FileType, const char *pTitle, const char *pButtonText,
 		const char *pBasepath, const char *pDefaultName,
 		void (*pfnFunc)(const char *pFilename, int StorageType, void *pUser), void *pUser);
@@ -890,7 +896,6 @@ public:
 	void DeleteSelectedQuads();
 	bool IsQuadSelected(int Index) const;
 	int FindSelectedQuadIndex(int Index) const;
-	bool IsSpecialLayer(const CLayer *pLayer) const;
 
 	float ScaleFontSize(char *pText, int TextSize, float FontSize, int Width);
 	int DoProperties(CUIRect *pToolbox, CProperty *pProps, int *pIDs, int *pNewVal, ColorRGBA Color = ColorRGBA(1, 1, 1, 0.5f));
@@ -943,6 +948,7 @@ public:
 	};
 
 	int m_FileDialogStorageType;
+	int m_FileDialogLastPopulatedStorageType;
 	const char *m_pFileDialogTitle;
 	const char *m_pFileDialogButtonText;
 	void (*m_pfnFileDialogFunc)(const char *pFileName, int StorageType, void *pUser);
@@ -950,14 +956,12 @@ public:
 	char m_aFileDialogFileName[IO_MAX_PATH_LENGTH];
 	char m_aFileDialogCurrentFolder[IO_MAX_PATH_LENGTH];
 	char m_aFileDialogCurrentLink[IO_MAX_PATH_LENGTH];
-	char m_aFileDialogSearchText[64];
-	char m_aFileDialogPrevSearchText[64];
+	char m_aFilesSelectedName[IO_MAX_PATH_LENGTH];
+	char m_aFileDialogFilterString[IO_MAX_PATH_LENGTH];
 	char *m_pFileDialogPath;
-	bool m_FileDialogActivate;
 	int m_FileDialogFileType;
-	float m_FileDialogScrollValue;
 	int m_FilesSelectedIndex;
-	char m_aFileDialogNewFolderName[64];
+	char m_aFileDialogNewFolderName[IO_MAX_PATH_LENGTH];
 	char m_aFileDialogErrString[64];
 	IGraphics::CTextureHandle m_FilePreviewImage;
 	bool m_PreviewImageIsLoaded;
@@ -967,18 +971,15 @@ public:
 	struct CFilelistItem
 	{
 		char m_aFilename[IO_MAX_PATH_LENGTH];
-		char m_aName[128];
+		char m_aName[IO_MAX_PATH_LENGTH];
 		bool m_IsDir;
 		bool m_IsLink;
 		int m_StorageType;
-		bool m_IsVisible;
 
 		bool operator<(const CFilelistItem &Other) const { return !str_comp(m_aFilename, "..") ? true : !str_comp(Other.m_aFilename, "..") ? false : m_IsDir && !Other.m_IsDir ? true : !m_IsDir && Other.m_IsDir ? false : str_comp_filenames(m_aFilename, Other.m_aFilename) < 0; }
 	};
-	std::vector<CFilelistItem> m_vFileList;
-	int m_FilesStartAt;
-	int m_FilesCur;
-	int m_FilesStopAt;
+	std::vector<CFilelistItem> m_vCompleteFileList;
+	std::vector<const CFilelistItem *> m_vpFilteredFileList;
 
 	std::vector<std::string> m_vSelectEntitiesFiles;
 	std::string m_SelectEntitiesImage;
@@ -1069,6 +1070,8 @@ public:
 	char m_aSettingsCommand[256];
 
 	void PlaceBorderTiles();
+
+	void UpdateTooltip(const void *pID, const CUIRect *pRect, const char *pToolTip);
 	int DoButton_Editor_Common(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_Editor(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip, int AlignVert = 1);
 	int DoButton_Env(const void *pID, const char *pText, int Checked, const CUIRect *pRect, const char *pToolTip, ColorRGBA Color);
@@ -1086,8 +1089,8 @@ public:
 
 	int DoButton_ColorPicker(const void *pID, const CUIRect *pRect, ColorRGBA *pColor, const char *pToolTip = nullptr);
 
-	bool DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *pOffset, bool Hidden = false, int Corners = IGraphics::CORNER_ALL);
-	bool DoClearableEditBox(void *pID, void *pClearID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *pOffset, bool Hidden, int Corners);
+	bool DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *pOffset, bool Hidden = false, int Corners = IGraphics::CORNER_ALL, const char *pToolTip = nullptr);
+	bool DoClearableEditBox(void *pID, void *pClearID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *pOffset, bool Hidden = false, int Corners = IGraphics::CORNER_ALL, const char *pToolTip = nullptr);
 
 	void RenderBackground(CUIRect View, IGraphics::CTextureHandle Texture, float Size, float Brightness);
 
@@ -1229,7 +1232,6 @@ public:
 	void RenderMenubar(CUIRect Menubar);
 	void RenderFileDialog();
 
-	void AddFileDialogEntry(int Index, CUIRect *pView);
 	void SelectGameLayer();
 	void SortImages();
 	bool SelectLayerByTile();

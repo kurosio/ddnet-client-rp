@@ -91,7 +91,7 @@ class CMenus : public CComponent
 	int DoButton_CheckBoxAutoVMarginAndSet(const void *pID, const char *pText, int *pValue, CUIRect *pRect, float VMargin);
 	int DoButton_CheckBox_Number(const void *pID, const char *pText, int Checked, const CUIRect *pRect);
 
-	ColorHSLA DoLine_ColorPicker(CButtonContainer *pResetID, float LineSize, float WantedPickerPosition, float LabelSize, float BottomMargin, CUIRect *pMainRect, const char *pText, unsigned int *pColorValue, ColorRGBA DefaultColor, bool CheckBoxSpacing = true, bool UseCheckBox = false, int *pCheckBoxValue = nullptr);
+	ColorHSLA DoLine_ColorPicker(CButtonContainer *pResetID, float LineSize, float LabelSize, float BottomMargin, CUIRect *pMainRect, const char *pText, unsigned int *pColorValue, ColorRGBA DefaultColor, bool CheckBoxSpacing = true, int *pCheckBoxValue = nullptr);
 	void DoLaserPreview(const CUIRect *pRect, ColorHSLA OutlineColor, ColorHSLA InnerColor, const int LaserType);
 	int DoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, bool UseScroll, int Current, int Min, int Max, int Step, float Scale, bool IsHex, float Round, ColorRGBA *pColor);
 	int DoButton_GridHeader(const void *pID, const char *pText, int Checked, const CUIRect *pRect);
@@ -196,22 +196,6 @@ class CMenus : public CComponent
 			TextRender()->RenderTextContainer(UIElement.Rect(0)->m_UITextContainer, ColorText, ColorTextOutline);
 		return UI()->DoButtonLogic(pID, Checked, pRect);
 	}
-
-	struct CListboxItem
-	{
-		int m_Visible;
-		int m_Selected;
-		CUIRect m_Rect;
-		CUIRect m_HitRect;
-	};
-
-	void UiDoListboxStart(const void *pID, const CUIRect *pRect, float RowHeight, const char *pTitle, const char *pBottomText, int NumItems,
-		int ItemsPerRow, int SelectedIndex, float ScrollValue, bool LogicOnly = false);
-	CListboxItem UiDoListboxNextItem(const void *pID, bool Selected = false, bool KeyEvents = true, bool NoHoverEffects = false);
-	CListboxItem UiDoListboxNextRow();
-	int UiDoListboxEnd(float *pScrollValue, bool *pItemActivated, bool *pListBoxActive = nullptr);
-
-	int UiLogicGetCurrentClickedItem();
 
 	/**
 	 * Places and renders a tooltip near pNearRect.
@@ -415,12 +399,12 @@ protected:
 
 		int NumMarkers() const
 		{
-			return clamp<int>(bytes_be_to_int(m_TimelineMarkers.m_aNumTimelineMarkers), 0, MAX_TIMELINE_MARKERS);
+			return clamp<int>(bytes_be_to_uint(m_TimelineMarkers.m_aNumTimelineMarkers), 0, MAX_TIMELINE_MARKERS);
 		}
 
 		int Length() const
 		{
-			return bytes_be_to_int(m_Info.m_aLength);
+			return bytes_be_to_uint(m_Info.m_aLength);
 		}
 
 		unsigned Size() const
@@ -543,8 +527,6 @@ protected:
 
 	// found in menus_browser.cpp
 	int m_SelectedIndex;
-	int m_DoubleClickIndex;
-	int m_ScrollOffset;
 	void RenderServerbrowserServerList(CUIRect View);
 	void Connect(const char *pAddress);
 	void PopupConfirmSwitchServer();
@@ -553,6 +535,8 @@ protected:
 	void RenderServerbrowserFriends(CUIRect View);
 	void PopupConfirmRemoveFriend();
 	void RenderServerbrowser(CUIRect MainView);
+	template<typename F>
+	bool PrintHighlighted(const char *pName, F &&PrintFn);
 	static void ConchainFriendlistUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainServerbrowserUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
@@ -565,8 +549,8 @@ protected:
 	void OnConfigSave(IConfigManager *pConfigManager);
 
 	// found in menus_settings.cpp
-	void RenderLanguageSelection(CUIRect MainView);
-	void RenderThemeSelection(CUIRect MainView, bool Header = true);
+	bool RenderLanguageSelection(CUIRect MainView);
+	void RenderThemeSelection(CUIRect MainView);
 	void RenderSettingsGeneral(CUIRect MainView);
 	void RenderSettingsPlayer(CUIRect MainView);
 	void RenderSettingsDummyPlayer(CUIRect MainView);
@@ -746,7 +730,6 @@ private:
 	static int GhostlistFetchCallback(const char *pName, int IsDir, int StorageType, void *pUser);
 	void SetMenuPage(int NewPage);
 	void RefreshBrowserTab(int UiPage);
-	bool HandleListInputs(const CUIRect &View, float &ScrollValue, float ScrollAmount, int *pScrollOffset, float ElemHeight, int &SelectedIndex, int NumElems);
 
 	// found in menus_ingame.cpp
 	void RenderInGameNetwork(CUIRect MainView);

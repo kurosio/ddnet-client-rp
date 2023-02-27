@@ -830,12 +830,12 @@ void CCharacter::TickDeferred()
 		int Events = m_Core.m_TriggeredEvents;
 		int CID = m_pPlayer->GetCID();
 
-		int64_t TeamMask = Teams()->TeamMask(Team(), -1, CID);
+		CClientMask TeamMask = Teams()->TeamMask(Team(), -1, CID);
 		// Some sounds are triggered client-side for the acting player
 		// so we need to avoid duplicating them
-		int64_t TeamMaskExceptSelf = Teams()->TeamMask(Team(), CID, CID);
+		CClientMask TeamMaskExceptSelf = Teams()->TeamMask(Team(), CID, CID);
 		// Some are triggered client-side but only on Sixup
-		int64_t TeamMaskExceptSelfIfSixup = Server()->IsSixup(CID) ? TeamMaskExceptSelf : TeamMask;
+		CClientMask TeamMaskExceptSelfIfSixup = Server()->IsSixup(CID) ? TeamMaskExceptSelf : TeamMask;
 
 		if(Events & COREEVENT_GROUND_JUMP)
 			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, TeamMaskExceptSelf);
@@ -976,12 +976,12 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 	}
 
 	// change eyes and use ninja graphic if player is frozen
-	if(m_Core.m_DeepFrozen || m_FreezeTime > 0 || m_FreezeTime == -1 || m_Core.m_LiveFrozen)
+	if(m_Core.m_DeepFrozen || m_FreezeTime > 0 || m_Core.m_LiveFrozen)
 	{
 		if(Emote == EMOTE_NORMAL)
 			Emote = (m_Core.m_DeepFrozen || m_Core.m_LiveFrozen) ? EMOTE_PAIN : EMOTE_BLINK;
 
-		if((m_Core.m_DeepFrozen || m_FreezeTime > 0 || m_FreezeTime == -1) && SnappingClientVersion < VERSION_DDNET_NEW_HUD)
+		if((m_Core.m_DeepFrozen || m_FreezeTime > 0) && SnappingClientVersion < VERSION_DDNET_NEW_HUD)
 			Weapon = WEAPON_NINJA;
 	}
 
@@ -1008,8 +1008,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 	}
 
 	// change eyes, use ninja graphic and set ammo count if player has ninjajetpack
-	if(m_pPlayer->m_NinjaJetpack && m_Core.m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN && !m_Core.m_DeepFrozen &&
-		!(m_FreezeTime > 0 || m_FreezeTime == -1) && !m_Core.m_HasTelegunGun)
+	if(m_pPlayer->m_NinjaJetpack && m_Core.m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN && !m_Core.m_DeepFrozen && m_FreezeTime == 0 && !m_Core.m_HasTelegunGun)
 	{
 		if(Emote == EMOTE_NORMAL)
 			Emote = EMOTE_HAPPY;
@@ -1023,12 +1022,12 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		Health = m_Health;
 		Armor = m_Armor;
 		if(m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0)
-			AmmoCount = (!m_FreezeTime) ? m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo : 0;
+			AmmoCount = (m_FreezeTime > 0) ? m_Core.m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo : 0;
 	}
 
 	if(GetPlayer()->IsAfk() || GetPlayer()->IsPaused())
 	{
-		if(m_FreezeTime > 0 || m_FreezeTime == -1 || m_Core.m_DeepFrozen || m_Core.m_LiveFrozen)
+		if(m_FreezeTime > 0 || m_Core.m_DeepFrozen || m_Core.m_LiveFrozen)
 			Emote = EMOTE_NORMAL;
 		else
 			Emote = EMOTE_BLINK;
@@ -1042,7 +1041,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	if(!Server()->IsSixup(SnappingClient))
 	{
-		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
+		CNetObj_Character *pCharacter = Server()->SnapNewItem<CNetObj_Character>(ID);
 		if(!pCharacter)
 			return;
 
@@ -1067,7 +1066,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 	}
 	else
 	{
-		protocol7::CNetObj_Character *pCharacter = static_cast<protocol7::CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(protocol7::CNetObj_Character)));
+		protocol7::CNetObj_Character *pCharacter = Server()->SnapNewItem<protocol7::CNetObj_Character>(ID);
 		if(!pCharacter)
 			return;
 
@@ -1084,7 +1083,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		pCharacter->m_Weapon = Weapon;
 		pCharacter->m_AmmoCount = AmmoCount;
 
-		if(m_FreezeTime > 0 || m_FreezeTime == -1 || m_Core.m_DeepFrozen)
+		if(m_FreezeTime > 0 || m_Core.m_DeepFrozen)
 			pCharacter->m_AmmoCount = m_Core.m_FreezeStart + g_Config.m_SvFreezeDelay * Server()->TickSpeed();
 		else if(Weapon == WEAPON_NINJA)
 			pCharacter->m_AmmoCount = m_Core.m_Ninja.m_ActivationTick + g_pData->m_Weapons.m_Ninja.m_Duration * Server()->TickSpeed() / 1000;
@@ -1153,7 +1152,7 @@ void CCharacter::Snap(int SnappingClient)
 
 	SnapCharacter(SnappingClient, ID);
 
-	CNetObj_DDNetCharacter *pDDNetCharacter = static_cast<CNetObj_DDNetCharacter *>(Server()->SnapNewItem(NETOBJTYPE_DDNETCHARACTER, ID, sizeof(CNetObj_DDNetCharacter)));
+	CNetObj_DDNetCharacter *pDDNetCharacter = Server()->SnapNewItem<CNetObj_DDNetCharacter>(ID);
 	if(!pDDNetCharacter)
 		return;
 
@@ -1734,7 +1733,7 @@ void CCharacter::HandleTiles(int Index)
 		{
 			char aBuf[256];
 			if(NewJumps == -1)
-				str_format(aBuf, sizeof(aBuf), "You only have your ground jump now");
+				str_copy(aBuf, "You only have your ground jump now");
 			else if(NewJumps == 1)
 				str_format(aBuf, sizeof(aBuf), "You can jump %d time", NewJumps);
 			else
@@ -1999,7 +1998,7 @@ void CCharacter::SetRescue()
 void CCharacter::DDRaceTick()
 {
 	mem_copy(&m_Input, &m_SavedInput, sizeof(m_Input));
-	m_Armor = (m_FreezeTime >= 0) ? clamp(10 - (m_FreezeTime / 15), 0, 10) : 0;
+	m_Armor = clamp(10 - (m_FreezeTime / 15), 0, 10);
 	if(m_Input.m_Direction != 0 || m_Input.m_Jump != 0)
 		m_LastMove = Server()->Tick();
 
@@ -2009,16 +2008,13 @@ void CCharacter::DDRaceTick()
 		m_Input.m_Jump = 0;
 		// Hook is possible in live freeze
 	}
-	if(m_FreezeTime > 0 || m_FreezeTime == -1)
+	if(m_FreezeTime > 0)
 	{
-		if(m_FreezeTime % Server()->TickSpeed() == Server()->TickSpeed() - 1 || m_FreezeTime == -1)
+		if(m_FreezeTime % Server()->TickSpeed() == Server()->TickSpeed() - 1)
 		{
 			GameServer()->CreateDamageInd(m_Pos, 0, (m_FreezeTime + 1) / Server()->TickSpeed(), TeamMask() & GameServer()->ClientsMaskExcludeClientVersionAndHigher(VERSION_DDNET_NEW_HUD));
 		}
-		if(m_FreezeTime > 0)
-			m_FreezeTime--;
-		else
-			m_Core.m_Ninja.m_ActivationTick = Server()->Tick();
+		m_FreezeTime--;
 		m_Input.m_Direction = 0;
 		m_Input.m_Jump = 0;
 		m_Input.m_Hook = 0;
@@ -2137,12 +2133,12 @@ void CCharacter::DDRacePostCoreTick()
 
 bool CCharacter::Freeze(int Seconds)
 {
-	if((Seconds <= 0 || m_Core.m_Super || m_FreezeTime == -1 || m_FreezeTime > Seconds * Server()->TickSpeed()) && Seconds != -1)
+	if(Seconds <= 0 || m_Core.m_Super || m_FreezeTime > Seconds * Server()->TickSpeed())
 		return false;
-	if(m_Core.m_FreezeStart < Server()->Tick() - Server()->TickSpeed() || Seconds == -1)
+	if(m_Core.m_FreezeStart < Server()->Tick() - Server()->TickSpeed())
 	{
 		m_Armor = 0;
-		m_FreezeTime = Seconds == -1 ? Seconds : Seconds * Server()->TickSpeed();
+		m_FreezeTime = Seconds * Server()->TickSpeed();
 		m_Core.m_FreezeStart = Server()->Tick();
 		return true;
 	}
@@ -2326,7 +2322,7 @@ void CCharacter::Rescue()
 	}
 }
 
-int64_t CCharacter::TeamMask()
+CClientMask CCharacter::TeamMask()
 {
 	return Teams()->TeamMask(Team(), -1, GetPlayer()->GetCID());
 }

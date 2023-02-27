@@ -33,7 +33,7 @@ CGameWorld::~CGameWorld()
 	// delete all entities
 	for(auto &pFirstEntityType : m_apFirstEntityTypes)
 		while(pFirstEntityType)
-			delete pFirstEntityType;
+			delete pFirstEntityType; // NOLINT(clang-analyzer-cplusplus.NewDelete)
 }
 
 void CGameWorld::SetGameServer(CGameContext *pGameServer)
@@ -148,6 +148,32 @@ void CGameWorld::Reset()
 	m_ResetRequested = false;
 
 	GameServer()->CreateAllEntities(false);
+}
+
+void CGameWorld::RemoveEntitiesFromPlayer(int PlayerId)
+{
+	RemoveEntitiesFromPlayers(&PlayerId, 1);
+}
+
+void CGameWorld::RemoveEntitiesFromPlayers(int PlayerIds[], int NumPlayers)
+{
+	for(auto *pEnt : m_apFirstEntityTypes)
+	{
+		for(; pEnt;)
+		{
+			m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
+			for(int i = 0; i < NumPlayers; i++)
+			{
+				if(pEnt->GetOwnerID() == PlayerIds[i])
+				{
+					RemoveEntity(pEnt);
+					pEnt->Destroy();
+					break;
+				}
+			}
+			pEnt = m_pNextTraverseEntity;
+		}
+	}
 }
 
 void CGameWorld::RemoveEntities()

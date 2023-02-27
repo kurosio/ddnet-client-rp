@@ -831,25 +831,26 @@ bool CGraphics_Threaded::ScreenshotDirect()
 
 	if(Image.m_pData)
 	{
-		// find filename
-		char aWholePath[1024];
+		char aWholePath[IO_MAX_PATH_LENGTH];
+		char aBuf[64 + IO_MAX_PATH_LENGTH];
 
 		IOHANDLE File = m_pStorage->OpenFile(m_aScreenshotName, IOFLAG_WRITE, IStorage::TYPE_SAVE, aWholePath, sizeof(aWholePath));
 		if(File)
 		{
-			char aBuf[256];
-			str_format(aBuf, sizeof(aBuf), "saved screenshot to '%s'", aWholePath);
-
-			// save png
-			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, ColorRGBA{1.0f, 0.6f, 0.3f, 1.0f});
-
 			TImageByteBuffer ByteBuffer;
 			SImageByteBuffer ImageByteBuffer(&ByteBuffer);
 
 			if(SavePNG(IMAGE_FORMAT_RGBA, (const uint8_t *)Image.m_pData, ImageByteBuffer, Image.m_Width, Image.m_Height))
 				io_write(File, &ByteBuffer.front(), ByteBuffer.size());
 			io_close(File);
+
+			str_format(aBuf, sizeof(aBuf), "saved screenshot to '%s'", aWholePath);
 		}
+		else
+		{
+			str_format(aBuf, sizeof(aBuf), "failed to save screenshot to '%s'", aWholePath);
+		}
+		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, ColorRGBA(1.0f, 0.6f, 0.3f, 1.0f));
 
 		free(Image.m_pData);
 	}
@@ -1946,23 +1947,27 @@ int CGraphics_Threaded::QuadContainerAddQuads(int ContainerIndex, CFreeformItem 
 
 void CGraphics_Threaded::QuadContainerReset(int ContainerIndex)
 {
+	if(ContainerIndex == -1)
+		return;
+
 	SQuadContainer &Container = m_vQuadContainers[ContainerIndex];
 	if(IsQuadContainerBufferingEnabled())
-	{
-		if(Container.m_QuadBufferContainerIndex != -1)
-			DeleteBufferContainer(Container.m_QuadBufferContainerIndex, true);
-	}
+		DeleteBufferContainer(Container.m_QuadBufferContainerIndex, true);
 	Container.m_vQuads.clear();
-	Container.m_QuadBufferContainerIndex = Container.m_QuadBufferObjectIndex = -1;
+	Container.m_QuadBufferObjectIndex = -1;
 }
 
-void CGraphics_Threaded::DeleteQuadContainer(int ContainerIndex)
+void CGraphics_Threaded::DeleteQuadContainer(int &ContainerIndex)
 {
+	if(ContainerIndex == -1)
+		return;
+
 	QuadContainerReset(ContainerIndex);
 
 	// also clear the container index
 	m_vQuadContainers[ContainerIndex].m_FreeIndex = m_FirstFreeQuadContainer;
 	m_FirstFreeQuadContainer = ContainerIndex;
+	ContainerIndex = -1;
 }
 
 void CGraphics_Threaded::RenderQuadContainer(int ContainerIndex, int QuadDrawNum)
@@ -2533,10 +2538,11 @@ int CGraphics_Threaded::CreateBufferContainer(SBufferContainerInfo *pContainerIn
 	return Index;
 }
 
-void CGraphics_Threaded::DeleteBufferContainer(int ContainerIndex, bool DestroyAllBO)
+void CGraphics_Threaded::DeleteBufferContainer(int &ContainerIndex, bool DestroyAllBO)
 {
 	if(ContainerIndex == -1)
 		return;
+
 	CCommandBuffer::SCommand_DeleteBufferContainer Cmd;
 	Cmd.m_BufferContainerIndex = ContainerIndex;
 	Cmd.m_DestroyAllBO = DestroyAllBO;
@@ -2563,6 +2569,7 @@ void CGraphics_Threaded::DeleteBufferContainer(int ContainerIndex, bool DestroyA
 	// also clear the buffer object index
 	m_vVertexArrayInfo[ContainerIndex].m_FreeIndex = m_FirstFreeVertexArrayInfo;
 	m_FirstFreeVertexArrayInfo = ContainerIndex;
+	ContainerIndex = -1;
 }
 
 void CGraphics_Threaded::UpdateBufferContainerInternal(int ContainerIndex, SBufferContainerInfo *pContainerInfo)
@@ -2903,12 +2910,18 @@ int CGraphics_Threaded::GetNumScreens() const
 void CGraphics_Threaded::Minimize()
 {
 	m_pBackend->Minimize();
+
+	for(auto &PropChangedListener : m_vPropChangeListeners)
+		PropChangedListener();
 }
 
 void CGraphics_Threaded::Maximize()
 {
 	// TODO: SDL
 	m_pBackend->Maximize();
+
+	for(auto &PropChangedListener : m_vPropChangeListeners)
+		PropChangedListener();
 }
 
 void CGraphics_Threaded::WarnPngliteIncompatibleImages(bool Warn)
@@ -2922,6 +2935,9 @@ void CGraphics_Threaded::SetWindowParams(int FullscreenMode, bool IsBorderless, 
 	CVideoMode CurMode;
 	m_pBackend->GetCurrentVideoMode(CurMode, m_ScreenHiDPIScale, g_Config.m_GfxDesktopWidth, g_Config.m_GfxDesktopHeight, g_Config.m_GfxScreen);
 	GotResized(CurMode.m_WindowWidth, CurMode.m_WindowHeight, CurMode.m_RefreshRate);
+
+	for(auto &PropChangedListener : m_vPropChangeListeners)
+		PropChangedListener();
 }
 
 bool CGraphics_Threaded::SetWindowScreen(int Index)
@@ -2934,6 +2950,9 @@ bool CGraphics_Threaded::SetWindowScreen(int Index)
 	m_pBackend->GetViewportSize(m_ScreenWidth, m_ScreenHeight);
 	AdjustViewport(true);
 	m_ScreenHiDPIScale = m_ScreenWidth / (float)g_Config.m_GfxScreenWidth;
+
+	for(auto &PropChangedListener : m_vPropChangeListeners)
+		PropChangedListener();
 	return true;
 }
 
@@ -2950,6 +2969,9 @@ void CGraphics_Threaded::Move(int x, int y)
 	m_pBackend->GetViewportSize(m_ScreenWidth, m_ScreenHeight);
 	AdjustViewport(true);
 	m_ScreenHiDPIScale = m_ScreenWidth / (float)g_Config.m_GfxScreenWidth;
+
+	for(auto &PropChangedListener : m_vPropChangeListeners)
+		PropChangedListener();
 }
 
 void CGraphics_Threaded::Resize(int w, int h, int RefreshRate)
@@ -2983,6 +3005,8 @@ void CGraphics_Threaded::GotResized(int w, int h, int RefreshRate)
 		RefreshRate = g_Config.m_GfxScreenRefreshRate;
 
 	// if the size change event is triggered, set all parameters and change the viewport
+	auto PrevCanvasWidth = m_ScreenWidth;
+	auto PrevCanvasHeight = m_ScreenHeight;
 	m_pBackend->GetViewportSize(m_ScreenWidth, m_ScreenHeight);
 
 	AdjustViewport(false);
@@ -3000,13 +3024,21 @@ void CGraphics_Threaded::GotResized(int w, int h, int RefreshRate)
 	KickCommandBuffer();
 	WaitForIdle();
 
-	for(auto &ResizeListener : m_vResizeListeners)
-		ResizeListener.m_pFunc(ResizeListener.m_pUser);
+	if(PrevCanvasWidth != m_ScreenWidth || PrevCanvasHeight != m_ScreenHeight)
+	{
+		for(auto &ResizeListener : m_vResizeListeners)
+			ResizeListener();
+	}
 }
 
-void CGraphics_Threaded::AddWindowResizeListener(WINDOW_RESIZE_FUNC pFunc, void *pUser)
+void CGraphics_Threaded::AddWindowResizeListener(WINDOW_RESIZE_FUNC pFunc)
 {
-	m_vResizeListeners.emplace_back(pFunc, pUser);
+	m_vResizeListeners.emplace_back(pFunc);
+}
+
+void CGraphics_Threaded::AddWindowPropChangeListener(WINDOW_PROPS_CHANGED_FUNC pFunc)
+{
+	m_vPropChangeListeners.emplace_back(pFunc);
 }
 
 int CGraphics_Threaded::GetWindowScreen()
