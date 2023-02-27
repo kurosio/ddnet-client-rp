@@ -199,6 +199,10 @@ public:
 	// input
 	virtual int *GetInput(int Tick, int IsDummy = 0) const = 0;
 
+	// mrpg states
+	virtual bool IsServerMRPG() const = 0;
+	virtual void SetStateServerMRPG(bool State) = 0;
+
 	// remote console
 	virtual void RconAuth(const char *pUsername, const char *pPassword) = 0;
 	virtual bool RconAuthed() const = 0;

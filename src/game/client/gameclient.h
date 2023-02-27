@@ -197,6 +197,9 @@ private:
 
 	char m_aDDNetVersionStr[64];
 
+	// mrpg
+	bool m_MmoMsgSent;
+
 	static void ConTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConKill(IConsole::IResult *pResult, void *pUserData);
 

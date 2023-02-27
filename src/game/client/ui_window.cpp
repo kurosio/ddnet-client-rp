@@ -163,8 +163,8 @@ void CWindowUI::RenderDefaultWindow()
 
 		// Window name
 		CUIRect Label{};
-		dbg_msg("test", "%d", ButtonsNum);
 		m_BordureRect.VSplitRight(ButtonTop.w * static_cast<float>(ButtonsNum), &Label, 0);
+		Label.VMargin(3.0f, &Label);
 		m_pUI->DoLabel(&Label, m_aName, s_FontSize, TEXTALIGN_LEFT);
 	}
 

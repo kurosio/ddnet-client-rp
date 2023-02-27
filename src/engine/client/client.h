@@ -169,6 +169,9 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	bool m_SendPassword;
 	bool m_ButtonRender = false;
 
+	// mrpg
+	bool m_IsServerMRPG;
+
 	// version-checking
 	char m_aVersionStr[10];
 
@@ -325,6 +328,8 @@ public:
 	void SendReady();
 	void SendMapRequest();
 
+	bool IsServerMRPG() const override { return m_IsServerMRPG; }
+	void SetStateServerMRPG(bool State) override { m_IsServerMRPG = State; }
 	bool RconAuthed() const override { return m_aRconAuthed[g_Config.m_ClDummy] != 0; }
 	bool UseTempRconCommands() const override { return m_UseTempRconCommands != 0; }
 	void RconAuth(const char *pName, const char *pPassword) override;

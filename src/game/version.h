@@ -10,4 +10,9 @@
 #define CLIENT_VERSIONNR 16072
 extern const char *GIT_SHORTREV_HASH;
 #define GAME_NAME "DDNet"
+
+// ~~ RELEASE PROTOCOL(CLIENT/SERVER SIDE) VERSION
+// in case of a change it will force to update the client when entering the server to the value that is specified here
+#define PROTOCOL_VERSION_MRPG 2000
+
 #endif

@@ -568,6 +568,13 @@ void CGameClient::OnReset()
 	m_LastDummyConnected = false;
 
 	m_ReceivedDDNetPlayer = false;
+
+	// mrpg reset state only on offline
+	if(Client()->State() == IClient::STATE_OFFLINE)
+	{
+		m_MmoMsgSent = false;
+		m_pClient->SetStateServerMRPG(false);
+	}
 }
 
 void CGameClient::UpdatePositions()
@@ -779,6 +786,20 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 	if(MsgId == NETMSGTYPE_SV_READYTOENTER)
 	{
 		Client()->EnterGame(Conn);
+
+		// send information what used client
+		if(!m_MmoMsgSent && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+		{
+			CNetMsg_Cl_IsMRPGServer Msg;
+			Msg.m_Version = PROTOCOL_VERSION_MRPG;
+			Client()->SendPackMsgActive(&Msg, MSGFLAG_VITAL);
+			m_MmoMsgSent = true;
+		}
+	}
+	else if(MsgId == NETMSGTYPE_SV_AFTERISMRPGSERVER && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+	{
+		m_pClient->SetStateServerMRPG(true);
+		// TODO: add MRPG auth
 	}
 	else if(MsgId == NETMSGTYPE_SV_EMOTICON)
 	{
