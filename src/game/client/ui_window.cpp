@@ -267,7 +267,6 @@ void CWindowUI::MinimizeWindow()
 // Functions for working with windows
 void CWindowUI::Init(vec2 WindowSize, bool* pRenderDependence)
 {
-	m_ColorTone = ColorHSLA(g_Config.m_UiWindowColor, true);
 	m_BordureRect = { 0, 0, 0, 0 };
 	m_MainRect = { 0, 0, WindowSize.x, WindowSize.y };
 	m_DefaultRect = m_MainRect;
@@ -276,6 +275,8 @@ void CWindowUI::Init(vec2 WindowSize, bool* pRenderDependence)
 	m_Moving = false;
 	if(pRenderDependence)
 		m_pRenderDependence = pRenderDependence;
+
+	SetColorTone(ColorHSLA(g_Config.m_UiDefaultWindowColor, true));
 }
 
 const CUIRect& CWindowUI::GetRect() const

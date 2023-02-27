@@ -193,12 +193,12 @@ public:
 		Function: SetColorTone -> void
 			- Set tone color.
 		Parameters:
-			- Color - vector4 color.
+			- NewColor - vector4 color.
 	*/
-	void SetColorTone(vec4 Color)
+	void SetColorTone(vec4 NewColor)
 	{
-		if(Color.a > 0.0f)
-			m_ColorTone = Color;
+		m_ColorTone = NewColor;
+		m_ColorTone.a = 0.85f;
 	}
 	
 	/*

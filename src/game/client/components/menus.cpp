@@ -2452,11 +2452,11 @@ void CMenus::OnRender()
 	{
 		// This intilized only one time
 
-		// create window
+		// create window Main window
 		pPiskaWin = UI()->CreateWindow("Category", vec2(200, 200), &m_MenuActive);
-
-		// register callback
-		pPiskaWin->Register([this](CUIRect MainView, CWindowUI *pWindow) {
+		pPiskaWin->SetColorTone(ColorHSLA(g_Config.m_ClBackgroundColor, true));
+		pPiskaWin->Register([this](CUIRect MainView, CWindowUI *pWindow) 
+		{
 			CUIRect Button{};
 			MainView.HSplitTop(24.0f, &Button, &MainView);
 
@@ -2466,12 +2466,10 @@ void CMenus::OnRender()
 		});
 
 		// create child and register callback render
-		pPiskaWin->AddChild("C1", vec2(300, 100))->Register([this](CUIRect MainView, CWindowUI *pWindow) {
-			// set color tone
-			vec4 Color = ColorHSLA(g_Config.m_ClBackgroundColor, true);
-			Color.a = 0.9f;
-			pWindow->SetColorTone(Color);
-
+		CWindowUI* pChild = pPiskaWin->AddChild("C1", vec2(300, 100));
+		pChild->SetColorTone(ColorHSLA(g_Config.m_ClBackgroundColor, true));
+		pChild->Register([this](CUIRect MainView, CWindowUI *pWindow)
+		{
 			// some render functions
 			UI()->DoLabel(&MainView, "Child window with color tone and flags.", 12.0f, TEXTALIGN_CENTER);
 
