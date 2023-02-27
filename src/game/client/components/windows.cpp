@@ -146,7 +146,7 @@ MessageElemUI *CWindowController::CreateInformationBoxElement(const char *pMessa
 
 void CWindowController::CreateInformationBox(const char *pWindowName, float Width, const char *pMessage, bool *pDepent)
 {
-	const int LineCount = TextRender()->TextLineCount(nullptr, s_MessageBoxFontSize, pMessage, Width);
+	const int LineCount = TextRender()->TextLineCount(s_MessageBoxFontSize, pMessage, Width);
 
 	MessageElemUI *pElement = CreateInformationBoxElement(pMessage);
 	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)), pDepent);
@@ -158,7 +158,7 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 
 void CWindowController::CreateInformationBox(const char *pWindowName, float Width, const char *pMessage, CWindowUI *pWindow)
 {
-	const int LineCount = TextRender()->TextLineCount(nullptr, s_MessageBoxFontSize, pMessage, Width);
+	const int LineCount = TextRender()->TextLineCount(s_MessageBoxFontSize, pMessage, Width);
 
 	MessageElemUI *pElement = CreateInformationBoxElement(pMessage);
 	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)));
@@ -176,7 +176,7 @@ void CWindowController::CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pC
 	CUIRect Label{}, ButtonOk{};
 	MainView.Margin(s_InformationBoxLabelSpace, &Label);
 	Label.HSplitBottom(24.0f, &Label, &ButtonOk);
-	TextRender()->Text(nullptr, Label.x, Label.y, 10.0f, pElemPopup->m_aMessageText, MainView.w);
+	TextRender()->Text(Label.x, Label.y, 10.0f, pElemPopup->m_aMessageText, MainView.w);
 
 	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonOk.get(), "Ok", false, &ButtonOk, nullptr))
 		pCurrentWindow->Close();
@@ -200,7 +200,7 @@ PopupElemUI *CWindowController::CreatePopupElement(const char *pMessage, PopupWi
 
 void CWindowController::CreatePopupBox(int WindowFlags, const char *pWindowName, float Width, float AppendHeight, const char *pMessage, PopupWindowCallback Callback, bool *pDepent)
 {
-	const int LineCount = TextRender()->TextLineCount(nullptr, s_PopupFontSize, pMessage, Width);
+	const int LineCount = TextRender()->TextLineCount(s_PopupFontSize, pMessage, Width);
 
 	PopupElemUI *pElement = CreatePopupElement(pMessage, std::move(Callback));
 	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 70.0f + (static_cast<float>(LineCount) * s_PopupFontSize) + AppendHeight), pDepent, WindowFlags);
@@ -212,7 +212,7 @@ void CWindowController::CreatePopupBox(int WindowFlags, const char *pWindowName,
 
 void CWindowController::CreatePopupBox(int WindowFlags, const char *pWindowName, float Width, float AppendHeight, const char *pMessage, PopupWindowCallback Callback, CWindowUI *pWindow)
 {
-	const int LineCount = TextRender()->TextLineCount(nullptr, s_PopupFontSize, pMessage, Width);
+	const int LineCount = TextRender()->TextLineCount(s_PopupFontSize, pMessage, Width);
 
 	PopupElemUI *pElement = CreatePopupElement(pMessage, std::move(Callback));
 	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 70.0f + (static_cast<float>(LineCount) * s_PopupFontSize) + AppendHeight), WindowFlags);
@@ -228,11 +228,11 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 											{ return (p->m_pWindow == pCurrentWindow); }));
 
 	CUIRect Label{}, ButtonAccept{}, ButtonDeny{}, Buttons{};
-	const int TextLines = TextRender()->TextLineCount(nullptr, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
+	const int TextLines = TextRender()->TextLineCount(s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
 	MainView.Margin(s_InformationBoxLabelSpace, &MainView);
 	MainView.HSplitTop(static_cast<float>(TextLines) * s_PopupFontSize, &Label, &MainView);
 	MainView.HSplitBottom(27.0f, &MainView, &Buttons);
-	TextRender()->Text(nullptr, Label.x, Label.y, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
+	TextRender()->Text(Label.x, Label.y, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
 	Buttons.VSplitLeft(MainView.w / 2.0f, &ButtonDeny, &ButtonAccept);
 
 	// buttons yes and no

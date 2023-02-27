@@ -113,7 +113,7 @@ void CWindowUI::RenderDefaultWindow()
 		{
 			constexpr float FontSizeHint = 8.0f;
 			const char* HotKeyLabel = Localize(pHintStr);
-			const float TextWidth = m_pUI->TextRender()->TextWidth(0, FontSizeHint, HotKeyLabel, -1, -1.0f);
+			const float TextWidth = m_pUI->TextRender()->TextWidth(FontSizeHint, HotKeyLabel, -1, -1.0f);
 
 			CUIRect BackgroundKeyPress = {m_pUI->MouseX(), m_pUI->MouseY(), 6.0f + TextWidth, FontSizeHint + s_BackgroundMargin};
 			m_pUI->RectLimitMapScreen(&BackgroundKeyPress, 12.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_SKIP_BORDURE_UP);
