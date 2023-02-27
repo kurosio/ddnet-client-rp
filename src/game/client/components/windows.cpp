@@ -155,7 +155,7 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 	const int LineCount = TextRender()->TextLineCount(s_MessageBoxFontSize, pMessage, Width);
 
 	MessageElemUI *pElement = CreateInformationBoxElement(pMessage);
-	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)), pDepent);
+	pElement->m_pWindow = UI()->CreateWindow(pWindowName, vec2(Width, 70.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)), pDepent);
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderInfoWindow, this));
 	pElement->m_pWindow->Open();
 
@@ -167,7 +167,7 @@ void CWindowController::CreateInformationBox(const char *pWindowName, float Widt
 	const int LineCount = TextRender()->TextLineCount(s_MessageBoxFontSize, pMessage, Width);
 
 	MessageElemUI *pElement = CreateInformationBoxElement(pMessage);
-	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 80.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)));
+	pElement->m_pWindow = pWindow->AddChild(pWindowName, vec2(Width, 70.0f + (static_cast<float>(LineCount) * s_MessageBoxFontSize)));
 	pElement->m_pWindow->Register(WINREGISTER(&CWindowController::CallbackRenderInfoWindow, this));
 	pElement->m_pWindow->Open();
 
@@ -181,10 +181,12 @@ void CWindowController::CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pC
 
 	CUIRect Label{}, ButtonOk{};
 	MainView.Margin(s_InformationBoxLabelSpace, &Label);
-	Label.HSplitBottom(24.0f, &Label, &ButtonOk);
-	TextRender()->Text(Label.x, Label.y, 10.0f, pElemPopup->m_aMessageText, MainView.w);
+	Label.HSplitBottom(18.0f, &Label, &ButtonOk);
+	TextRender()->Text(Label.x, Label.y, s_MessageBoxFontSize, pElemPopup->m_aMessageText, MainView.w);
 
-	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonOk.get(), "Ok", false, &ButtonOk, nullptr))
+	ButtonOk.w = MainView.w / 2.f;
+	ButtonOk.x = MainView.x + ButtonOk.w / 2.f;
+	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonOk.get(), "OK", false, &ButtonOk, nullptr))
 		pCurrentWindow->Close();
 }
 
@@ -237,17 +239,18 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 	const int TextLines = TextRender()->TextLineCount(s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
 	MainView.Margin(s_InformationBoxLabelSpace, &MainView);
 	MainView.HSplitTop(static_cast<float>(TextLines) * s_PopupFontSize, &Label, &MainView);
-	MainView.HSplitBottom(27.0f, &MainView, &Buttons);
+	MainView.HSplitBottom(18.0f, &MainView, &Buttons);
+	MainView.HMargin(3.0f, &MainView);
 	TextRender()->Text(Label.x, Label.y, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
-	Buttons.VSplitLeft(MainView.w / 2.0f, &ButtonDeny, &ButtonAccept);
 
 	// buttons yes and no
+	Buttons.VSplitLeft(MainView.w / 2.f, &ButtonDeny, &ButtonAccept);
 	PopupState State = PopupState::RENDER;
-	ButtonAccept.Margin(5.0f, &ButtonAccept);
+	ButtonAccept.VMargin(5.0f, &ButtonAccept);
 	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonYes.get(), "Yes", 0, &ButtonAccept))
 		State = PopupState::YES;
 
-	ButtonDeny.Margin(5.0f, &ButtonDeny);
+	ButtonDeny.VMargin(5.0f, &ButtonDeny);
 	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonNo.get(), "No", 0, &ButtonDeny))
 		State = PopupState::NO;
 

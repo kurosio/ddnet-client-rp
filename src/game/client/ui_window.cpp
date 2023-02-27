@@ -13,8 +13,8 @@
 
 constexpr float s_BackgroundMargin = 2.0f;
 constexpr float s_Rounding = 7.0f;
-constexpr float s_FontSize = 10.0f;
-constexpr float s_BordureWidth = 15.0f;
+constexpr float s_FontSize = 12.0f;
+constexpr float s_BordureWidth = 18.0f;
 
 // The basic logic
 void CWindowUI::RenderWindowWithoutBordure()

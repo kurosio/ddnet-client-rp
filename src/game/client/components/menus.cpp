@@ -2487,7 +2487,7 @@ void CMenus::OnRender()
 					{
 						if(PState1 == PopupState::YES){
 							// create information box after clicked Button Yes from popup and update children
-							m_pClient->m_Windows.CreateInformationBox("PYES", 400.0f, "Information box for some BUTTON-YES ", pPopupWin1);
+							m_pClient->m_Windows.CreateInformationBox("PYES", 200.0f, "Information box fo sakodkoas kdoas kdoask doask odfaskfo askf oaskfo askfoas kfosak fosakf oaskf oaskfo askf osadkjgiofdnmas jgoisdangio sandgiosdnagi osdanmiog\bnfsafsafsar some BUTTON-YES ", pPopupWin1);
 						}
 						else if(PState1 == PopupState::NO){
 							// close for button NO
