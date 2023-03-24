@@ -154,7 +154,7 @@ void CDialogRPG::OnRender()
 	int TextContainer = -1;
 	TextRender()->SetCursor(&Cursor, LabelText.x, LabelText.y, FontSize, TEXTFLAG_RENDER);
 	Cursor.m_LineWidth = LabelText.w;
-	Cursor.m_MaxLines = round_ceil(LabelText.h / FontSize);
+	Cursor.m_MaxLines = static_cast<int>(ceil(LabelText.h / FontSize));
 	TextRender()->CreateTextContainer(TextContainer, &Cursor, m_Dialog.m_aTextMsg);
 	{
 		ColorRGBA Color(0.f, 0.f, 0.f, 0.7f);
