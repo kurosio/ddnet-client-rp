@@ -115,6 +115,7 @@ public:
 	virtual void MoveCursor(CTextCursor *pCursor, float x, float y) const = 0;
 	virtual void SetCursorPosition(CTextCursor *pCursor, float x, float y) const = 0;
 
+	virtual void LoadFont(CFont **pFont, const char *pFileName) = 0;
 	virtual CFont *LoadFont(const char *pFilename, unsigned char *pBuf, size_t Size) = 0;
 	virtual bool LoadFallbackFont(CFont *pFont, const char *pFilename, unsigned char *pBuf, size_t Size) const = 0;
 	virtual CFont *GetFont(size_t FontIndex) = 0;

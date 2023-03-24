@@ -4230,7 +4230,7 @@ void CClient::ToggleWindowVSync()
 
 void CClient::LoadFont()
 {
-	static CFont *pDefaultFont = 0;
+	static CFont *pDefaultFont = nullptr;
 	char aFilename[IO_MAX_PATH_LENGTH];
 	char aBuff[1024];
 	const char *pFontFile = "fonts/DejaVuSans.ttf";
@@ -4239,24 +4239,15 @@ void CClient::LoadFont()
 			"fonts/GlowSansJCompressed-Book.otf",
 			"fonts/SourceHanSansSC-Regular.otf",
 		};
-	IOHANDLE File = Storage()->OpenFile(pFontFile, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename));
-	if(File)
-	{
-		IEngineTextRender *pTextRender = Kernel()->RequestInterface<IEngineTextRender>();
-		pDefaultFont = pTextRender->GetFont(aFilename);
-		if(pDefaultFont == NULL)
-		{
-			void *pBuf;
-			unsigned Size;
-			io_read_all(File, &pBuf, &Size);
-			pDefaultFont = pTextRender->LoadFont(aFilename, (unsigned char *)pBuf, Size);
-		}
-		io_close(File);
 
+	IEngineTextRender *pTextRender = Kernel()->RequestInterface<IEngineTextRender>();
+	pTextRender->LoadFont(&pDefaultFont, pFontFile);
+	if(pDefaultFont)
+	{
 		for(auto &pFallbackFontFile : apFallbackFontFiles)
 		{
 			bool FontLoaded = false;
-			File = Storage()->OpenFile(pFallbackFontFile, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename));
+			IOHANDLE File = Storage()->OpenFile(pFallbackFontFile, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename));
 			if(File)
 			{
 				void *pBuf;
@@ -4274,13 +4265,12 @@ void CClient::LoadFont()
 		}
 
 		pTextRender->SetDefaultFont(pDefaultFont);
+		return;
 	}
 
-	if(!pDefaultFont)
-	{
-		str_format(aBuff, std::size(aBuff), "failed to load font. filename='%s'", pFontFile);
-		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "gameclient", aBuff);
-	}
+	// can't load
+	str_format(aBuff, std::size(aBuff), "failed to load font. filename='%s'", pFontFile);
+	m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "gameclient", aBuff);
 }
 
 void CClient::Notify(const char *pTitle, const char *pMessage)

@@ -55,6 +55,8 @@
 #include "components/voting.h"
 #include "components/windows.h"
 
+#include "components/mrpg/dialog.h"
+
 class CGameInfo
 {
 public:
@@ -141,6 +143,9 @@ public:
 	CFreezeBars m_FreezeBars;
 	CItems m_Items;
 	CMapImages m_MapImages;
+
+	// mrpg
+	CDialogRPG m_DialogRPG;
 
 	CMapLayers m_MapLayersBackGround = CMapLayers{CMapLayers::TYPE_BACKGROUND};
 	CMapLayers m_MapLayersForeGround = CMapLayers{CMapLayers::TYPE_FOREGROUND};

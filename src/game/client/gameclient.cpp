@@ -137,6 +137,9 @@ void CGameClient::OnConsoleInit()
 					      &m_KillMessages,
 					      &m_Chat,
 					      &m_Broadcast,
+
+					      &m_DialogRPG,
+
 					      &m_DebugHud,
 					      &m_Scoreboard,
 					      &m_Statboard,
@@ -159,6 +162,9 @@ void CGameClient::OnConsoleInit()
 						  &m_Menus,
 						  &m_Spectator,
 						  &m_Emoticon,
+
+						  &m_DialogRPG,
+
 						  &m_Controls,
 						  &m_Binds});
 

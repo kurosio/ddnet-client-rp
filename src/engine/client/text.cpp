@@ -694,6 +694,24 @@ public:
 		}
 	}
 
+	void LoadFont(CFont **pFont, const char *pFontFile) override
+	{
+		IStorage *pStorage = Kernel()->RequestInterface<IStorage>();
+		char aFilename[IO_MAX_PATH_LENGTH];
+		if(const IOHANDLE File = pStorage->OpenFile(pFontFile, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename)))
+		{
+			*pFont = GetFont(aFilename);
+			if(!*pFont)
+			{
+				void *pBuf;
+				unsigned Size;
+				io_read_all(File, &pBuf, &Size);
+				*pFont = LoadFont(aFilename, (unsigned char *)pBuf, Size);
+			}
+			io_close(File);
+		}
+	}
+
 	CFont *LoadFont(const char *pFilename, unsigned char *pBuf, size_t Size) override
 	{
 		CFont *pFont = new CFont();

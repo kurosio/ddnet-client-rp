@@ -1443,6 +1443,7 @@ set(EXPECTED_DATA
   emoticons.png
   extras.png
   fonts/DejaVuSans.ttf
+  fonts/EuroStyle.ttf
   fonts/GlowSansJCompressed-Book.otf
   fonts/Icons.otf
   fonts/SourceHanSansSC-Regular.otf
@@ -2228,6 +2229,8 @@ if(CLIENT)
     components/menus_start.cpp
     components/motd.cpp
     components/motd.h
+    components/mrpg/dialog.cpp
+    components/mrpg/dialog.h
     components/nameplates.cpp
     components/nameplates.h
     components/particles.cpp
