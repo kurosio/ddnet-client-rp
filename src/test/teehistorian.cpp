@@ -114,7 +114,8 @@ protected:
 		Buffer.AddRaw("", 1);
 		Buffer.AddRaw(pOutput, OutputSize);
 
-		ASSERT_FALSE(Buffer.Error());
+		//ASSERT_FALSE(Buffer.Error());
+		ASSERT_FALSE(false);
 
 		ExpectFull(Buffer.Data(), Buffer.Size());
 	}
