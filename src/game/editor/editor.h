@@ -301,6 +301,7 @@ public:
 	{
 		m_pEditor = pEditor;
 		m_aName[0] = 0;
+		m_Texture.Invalidate();
 		m_External = 0;
 		m_Width = 0;
 		m_Height = 0;
@@ -746,6 +747,13 @@ class CEditor : public IEditor
 
 	int GetTextureUsageFlag();
 
+	enum EPreviewImageState
+	{
+		PREVIEWIMAGE_UNLOADED,
+		PREVIEWIMAGE_LOADED,
+		PREVIEWIMAGE_ERROR,
+	};
+
 public:
 	class IInput *Input() { return m_pInput; }
 	class IClient *Client() { return m_pClient; }
@@ -766,6 +774,13 @@ public:
 		m_pGraphics = nullptr;
 		m_pTextRender = nullptr;
 		m_pSound = nullptr;
+
+		m_EntitiesTexture.Invalidate();
+		m_FrontTexture.Invalidate();
+		m_TeleTexture.Invalidate();
+		m_SpeedupTexture.Invalidate();
+		m_SwitchTexture.Invalidate();
+		m_TuneTexture.Invalidate();
 
 		m_Mode = MODE_LAYERS;
 		m_Dialog = 0;
@@ -798,6 +813,9 @@ public:
 		m_pFileDialogPath = m_aFileDialogCurrentFolder;
 		m_FileDialogOpening = false;
 		m_FilesSelectedIndex = -1;
+
+		m_FilePreviewImage.Invalidate();
+		m_PreviewImageState = PREVIEWIMAGE_UNLOADED;
 
 		m_SelectEntitiesImage = "DDNet";
 
@@ -838,6 +856,10 @@ public:
 		m_QuadKnifeActive = false;
 		m_QuadKnifeCount = 0;
 
+		m_CheckerTexture.Invalidate();
+		m_BackgroundTexture.Invalidate();
+		m_CursorTexture.Invalidate();
+
 		m_CommandBox = 0.0f;
 		m_aSettingsCommand[0] = 0;
 
@@ -876,7 +898,9 @@ public:
 	void FilelistPopulate(int StorageType, bool KeepSelection = false);
 	void InvokeFileDialog(int StorageType, int FileType, const char *pTitle, const char *pButtonText,
 		const char *pBasepath, const char *pDefaultName,
-		void (*pfnFunc)(const char *pFilename, int StorageType, void *pUser), void *pUser);
+		bool (*pfnFunc)(const char *pFilename, int StorageType, void *pUser), void *pUser);
+	void ShowFileDialogError(const char *pFormat, ...)
+		GNUC_ATTRIBUTE((format(printf, 2, 3)));
 
 	void Reset(bool CreateDefault = true);
 	bool Save(const char *pFilename) override;
@@ -951,7 +975,7 @@ public:
 	int m_FileDialogLastPopulatedStorageType;
 	const char *m_pFileDialogTitle;
 	const char *m_pFileDialogButtonText;
-	void (*m_pfnFileDialogFunc)(const char *pFileName, int StorageType, void *pUser);
+	bool (*m_pfnFileDialogFunc)(const char *pFileName, int StorageType, void *pUser);
 	void *m_pFileDialogUser;
 	char m_aFileDialogFileName[IO_MAX_PATH_LENGTH];
 	char m_aFileDialogCurrentFolder[IO_MAX_PATH_LENGTH];
@@ -962,9 +986,8 @@ public:
 	int m_FileDialogFileType;
 	int m_FilesSelectedIndex;
 	char m_aFileDialogNewFolderName[IO_MAX_PATH_LENGTH];
-	char m_aFileDialogErrString[64];
 	IGraphics::CTextureHandle m_FilePreviewImage;
-	bool m_PreviewImageIsLoaded;
+	EPreviewImageState m_PreviewImageState;
 	CImageInfo m_FilePreviewImageInfo;
 	bool m_FileDialogOpening;
 
@@ -975,11 +998,62 @@ public:
 		bool m_IsDir;
 		bool m_IsLink;
 		int m_StorageType;
-
-		bool operator<(const CFilelistItem &Other) const { return !str_comp(m_aFilename, "..") ? true : !str_comp(Other.m_aFilename, "..") ? false : m_IsDir && !Other.m_IsDir ? true : !m_IsDir && Other.m_IsDir ? false : str_comp_filenames(m_aFilename, Other.m_aFilename) < 0; }
+		time_t m_TimeModified;
 	};
 	std::vector<CFilelistItem> m_vCompleteFileList;
 	std::vector<const CFilelistItem *> m_vpFilteredFileList;
+
+	static bool CompareFilenameAscending(const CFilelistItem *pLhs, const CFilelistItem *pRhs)
+	{
+		if(str_comp(pLhs->m_aFilename, "..") == 0)
+			return true;
+		if(str_comp(pRhs->m_aFilename, "..") == 0)
+			return false;
+		if(pLhs->m_IsDir != pRhs->m_IsDir)
+			return pLhs->m_IsDir;
+		return str_comp_filenames(pLhs->m_aName, pRhs->m_aName) < 0;
+	}
+
+	static bool CompareFilenameDescending(const CFilelistItem *pLhs, const CFilelistItem *pRhs)
+	{
+		if(str_comp(pLhs->m_aFilename, "..") == 0)
+			return true;
+		if(str_comp(pRhs->m_aFilename, "..") == 0)
+			return false;
+		if(pLhs->m_IsDir != pRhs->m_IsDir)
+			return pLhs->m_IsDir;
+		return str_comp_filenames(pLhs->m_aName, pRhs->m_aName) > 0;
+	}
+
+	static bool CompareTimeModifiedAscending(const CFilelistItem *pLhs, const CFilelistItem *pRhs)
+	{
+		if(str_comp(pLhs->m_aFilename, "..") == 0)
+			return true;
+		if(str_comp(pRhs->m_aFilename, "..") == 0)
+			return false;
+		if(pLhs->m_IsLink || pRhs->m_IsLink)
+			return pLhs->m_IsLink;
+		if(pLhs->m_IsDir != pRhs->m_IsDir)
+			return pLhs->m_IsDir;
+		return pLhs->m_TimeModified < pRhs->m_TimeModified;
+	}
+
+	static bool CompareTimeModifiedDescending(const CFilelistItem *pLhs, const CFilelistItem *pRhs)
+	{
+		if(str_comp(pLhs->m_aFilename, "..") == 0)
+			return true;
+		if(str_comp(pRhs->m_aFilename, "..") == 0)
+			return false;
+		if(pLhs->m_IsLink || pRhs->m_IsLink)
+			return pLhs->m_IsLink;
+		if(pLhs->m_IsDir != pRhs->m_IsDir)
+			return pLhs->m_IsDir;
+		return pLhs->m_TimeModified > pRhs->m_TimeModified;
+	}
+
+	void SortFilteredFileList();
+	int m_SortByFilename = 1;
+	int m_SortByTimeModified = 0;
 
 	std::vector<std::string> m_vSelectEntitiesFiles;
 	std::string m_SelectEntitiesImage;
@@ -1089,6 +1163,8 @@ public:
 
 	int DoButton_ColorPicker(const void *pID, const CUIRect *pRect, ColorRGBA *pColor, const char *pToolTip = nullptr);
 
+	int DoButton_DraggableEx(const void *pID, const char *pText, int Checked, const CUIRect *pRect, bool *pClicked, bool *pAbrupted, int Flags, const char *pToolTip = nullptr, int Corners = IGraphics::CORNER_ALL, float FontSize = 10.0f, int AlignVert = 1);
+
 	bool DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *pOffset, bool Hidden = false, int Corners = IGraphics::CORNER_ALL, const char *pToolTip = nullptr);
 	bool DoClearableEditBox(void *pID, void *pClearID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *pOffset, bool Hidden = false, int Corners = IGraphics::CORNER_ALL, const char *pToolTip = nullptr);
 
@@ -1103,7 +1179,7 @@ public:
 	bool UiPopupExists(void *pID);
 	bool UiPopupOpen();
 
-	int UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, int Current, int Min, int Max, int Step, float Scale, const char *pToolTip, bool IsDegree = false, bool IsHex = false, int corners = IGraphics::CORNER_ALL, ColorRGBA *pColor = nullptr);
+	int UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, int Current, int Min, int Max, int Step, float Scale, const char *pToolTip, bool IsDegree = false, bool IsHex = false, int corners = IGraphics::CORNER_ALL, ColorRGBA *pColor = nullptr, bool ShowValue = true);
 
 	static int PopupGroup(CEditor *pEditor, CUIRect View, void *pContext);
 
@@ -1134,7 +1210,7 @@ public:
 	{
 		static constexpr float POPUP_MAX_WIDTH = 200.0f;
 		static constexpr float POPUP_FONT_SIZE = 10.0f;
-		char m_aMessage[256];
+		char m_aMessage[1024];
 		ColorRGBA m_TextColor;
 
 		void DefaultColor(class ITextRender *pTextRender);
@@ -1180,10 +1256,10 @@ public:
 	static int PopupSelection(CEditor *pEditor, CUIRect View, void *pContext);
 	void ShowPopupSelection(float X, float Y, SSelectionPopupContext *pContext);
 
-	static void CallbackOpenMap(const char *pFileName, int StorageType, void *pUser);
-	static void CallbackAppendMap(const char *pFileName, int StorageType, void *pUser);
-	static void CallbackSaveMap(const char *pFileName, int StorageType, void *pUser);
-	static void CallbackSaveCopyMap(const char *pFileName, int StorageType, void *pUser);
+	static bool CallbackOpenMap(const char *pFileName, int StorageType, void *pUser);
+	static bool CallbackAppendMap(const char *pFileName, int StorageType, void *pUser);
+	static bool CallbackSaveMap(const char *pFileName, int StorageType, void *pUser);
+	static bool CallbackSaveCopyMap(const char *pFileName, int StorageType, void *pUser);
 
 	void PopupSelectImageInvoke(int Current, float x, float y);
 	int PopupSelectImageResult();
@@ -1212,10 +1288,10 @@ public:
 	void DoQuad(CQuad *pQuad, int Index);
 	ColorRGBA GetButtonColor(const void *pID, int Checked);
 
-	static void ReplaceImage(const char *pFilename, int StorageType, void *pUser);
-	static void ReplaceSound(const char *pFileName, int StorageType, void *pUser);
-	static void AddImage(const char *pFilename, int StorageType, void *pUser);
-	static void AddSound(const char *pFileName, int StorageType, void *pUser);
+	static bool ReplaceImage(const char *pFilename, int StorageType, void *pUser);
+	static bool ReplaceSound(const char *pFileName, int StorageType, void *pUser);
+	static bool AddImage(const char *pFilename, int StorageType, void *pUser);
+	static bool AddSound(const char *pFileName, int StorageType, void *pUser);
 
 	bool IsEnvelopeUsed(int EnvelopeIndex) const;
 	void RemoveUnusedEnvelopes();

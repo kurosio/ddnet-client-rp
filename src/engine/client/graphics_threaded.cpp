@@ -11,11 +11,14 @@
 #include <base/system.h>
 
 #include <engine/console.h>
+#include <engine/engine.h>
 #include <engine/gfx/image_loader.h>
 #include <engine/gfx/image_manipulation.h>
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
+#include <engine/shared/jobs.h>
 #include <engine/storage.h>
+
 #include <game/generated/client_data.h>
 #include <game/generated/client_data7.h>
 #include <game/localization.h>
@@ -811,6 +814,55 @@ void CGraphics_Threaded::KickCommandBuffer()
 	m_pCommandBuffer->Reset();
 }
 
+class CScreenshotSaveJob : public IJob
+{
+	IStorage *m_pStorage;
+	IConsole *m_pConsole;
+	char m_aName[IO_MAX_PATH_LENGTH];
+	int m_Width;
+	int m_Height;
+	void *m_pData;
+
+	void Run() override
+	{
+		char aWholePath[IO_MAX_PATH_LENGTH];
+		char aBuf[64 + IO_MAX_PATH_LENGTH];
+		IOHANDLE File = m_pStorage->OpenFile(m_aName, IOFLAG_WRITE, IStorage::TYPE_SAVE, aWholePath, sizeof(aWholePath));
+		if(File)
+		{
+			TImageByteBuffer ByteBuffer;
+			SImageByteBuffer ImageByteBuffer(&ByteBuffer);
+
+			if(SavePNG(IMAGE_FORMAT_RGBA, (const uint8_t *)m_pData, ImageByteBuffer, m_Width, m_Height))
+				io_write(File, &ByteBuffer.front(), ByteBuffer.size());
+			io_close(File);
+
+			str_format(aBuf, sizeof(aBuf), "saved screenshot to '%s'", aWholePath);
+		}
+		else
+		{
+			str_format(aBuf, sizeof(aBuf), "failed to save screenshot to '%s'", aWholePath);
+		}
+		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, ColorRGBA(1.0f, 0.6f, 0.3f, 1.0f));
+	}
+
+public:
+	CScreenshotSaveJob(IStorage *pStorage, IConsole *pConsole, const char *pName, int Width, int Height, void *pData) :
+		m_pStorage(pStorage),
+		m_pConsole(pConsole),
+		m_Width(Width),
+		m_Height(Height),
+		m_pData(pData)
+	{
+		str_copy(m_aName, pName);
+	}
+
+	virtual ~CScreenshotSaveJob()
+	{
+		free(m_pData);
+	}
+};
+
 bool CGraphics_Threaded::ScreenshotDirect()
 {
 	// add swap command
@@ -831,28 +883,7 @@ bool CGraphics_Threaded::ScreenshotDirect()
 
 	if(Image.m_pData)
 	{
-		char aWholePath[IO_MAX_PATH_LENGTH];
-		char aBuf[64 + IO_MAX_PATH_LENGTH];
-
-		IOHANDLE File = m_pStorage->OpenFile(m_aScreenshotName, IOFLAG_WRITE, IStorage::TYPE_SAVE, aWholePath, sizeof(aWholePath));
-		if(File)
-		{
-			TImageByteBuffer ByteBuffer;
-			SImageByteBuffer ImageByteBuffer(&ByteBuffer);
-
-			if(SavePNG(IMAGE_FORMAT_RGBA, (const uint8_t *)Image.m_pData, ImageByteBuffer, Image.m_Width, Image.m_Height))
-				io_write(File, &ByteBuffer.front(), ByteBuffer.size());
-			io_close(File);
-
-			str_format(aBuf, sizeof(aBuf), "saved screenshot to '%s'", aWholePath);
-		}
-		else
-		{
-			str_format(aBuf, sizeof(aBuf), "failed to save screenshot to '%s'", aWholePath);
-		}
-		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, ColorRGBA(1.0f, 0.6f, 0.3f, 1.0f));
-
-		free(Image.m_pData);
+		m_pEngine->AddJob(std::make_shared<CScreenshotSaveJob>(m_pStorage, m_pConsole, m_aScreenshotName, Image.m_Width, Image.m_Height, Image.m_pData));
 	}
 
 	return DidSwap;
@@ -1262,12 +1293,12 @@ void CGraphics_Threaded::DrawRectExt(float x, float y, float w, float h, float r
 		float a1 = i * SegmentsAngle;
 		float a2 = (i + 1) * SegmentsAngle;
 		float a3 = (i + 2) * SegmentsAngle;
-		float Ca1 = cosf(a1);
-		float Ca2 = cosf(a2);
-		float Ca3 = cosf(a3);
-		float Sa1 = sinf(a1);
-		float Sa2 = sinf(a2);
-		float Sa3 = sinf(a3);
+		float Ca1 = std::cos(a1);
+		float Ca2 = std::cos(a2);
+		float Ca3 = std::cos(a3);
+		float Sa1 = std::sin(a1);
+		float Sa2 = std::sin(a2);
+		float Sa3 = std::sin(a3);
 
 		if(Corners & CORNER_TL)
 			aFreeform[NumItems++] = IGraphics::CFreeformItem(
@@ -1336,12 +1367,12 @@ void CGraphics_Threaded::DrawRectExt4(float x, float y, float w, float h, ColorR
 		float a1 = i * SegmentsAngle;
 		float a2 = (i + 1) * SegmentsAngle;
 		float a3 = (i + 2) * SegmentsAngle;
-		float Ca1 = cosf(a1);
-		float Ca2 = cosf(a2);
-		float Ca3 = cosf(a3);
-		float Sa1 = sinf(a1);
-		float Sa2 = sinf(a2);
-		float Sa3 = sinf(a3);
+		float Ca1 = std::cos(a1);
+		float Ca2 = std::cos(a2);
+		float Ca3 = std::cos(a3);
+		float Sa1 = std::sin(a1);
+		float Sa2 = std::sin(a2);
+		float Sa3 = std::sin(a3);
 
 		if(Corners & CORNER_TL)
 		{
@@ -1504,12 +1535,12 @@ int CGraphics_Threaded::CreateRectQuadContainer(float x, float y, float w, float
 		float a1 = i * SegmentsAngle;
 		float a2 = (i + 1) * SegmentsAngle;
 		float a3 = (i + 2) * SegmentsAngle;
-		float Ca1 = cosf(a1);
-		float Ca2 = cosf(a2);
-		float Ca3 = cosf(a3);
-		float Sa1 = sinf(a1);
-		float Sa2 = sinf(a2);
-		float Sa3 = sinf(a3);
+		float Ca1 = std::cos(a1);
+		float Ca2 = std::cos(a2);
+		float Ca3 = std::cos(a3);
+		float Sa1 = std::sin(a1);
+		float Sa2 = std::sin(a2);
+		float Sa3 = std::sin(a3);
 
 		if(Corners & CORNER_TL)
 			aFreeform[NumItems++] = IGraphics::CFreeformItem(
@@ -1598,9 +1629,9 @@ void CGraphics_Threaded::DrawCircle(float CenterX, float CenterY, float Radius, 
 		const float a3 = (i + 2) * SegmentsAngle;
 		aItems[NumItems++] = IGraphics::CFreeformItem(
 			CenterX, CenterY,
-			CenterX + cosf(a1) * Radius, CenterY + sinf(a1) * Radius,
-			CenterX + cosf(a3) * Radius, CenterY + sinf(a3) * Radius,
-			CenterX + cosf(a2) * Radius, CenterY + sinf(a2) * Radius);
+			CenterX + std::cos(a1) * Radius, CenterY + std::sin(a1) * Radius,
+			CenterX + std::cos(a3) * Radius, CenterY + std::sin(a3) * Radius,
+			CenterX + std::cos(a2) * Radius, CenterY + std::sin(a2) * Radius);
 		if(NumItems == std::size(aItems))
 		{
 			QuadsDrawFreeform(aItems, std::size(aItems));
@@ -2836,6 +2867,7 @@ int CGraphics_Threaded::Init()
 	// fetch pointers
 	m_pStorage = Kernel()->RequestInterface<IStorage>();
 	m_pConsole = Kernel()->RequestInterface<IConsole>();
+	m_pEngine = Kernel()->RequestInterface<IEngine>();
 
 	// init textures
 	m_FirstFreeTexture = 0;
@@ -2947,9 +2979,8 @@ bool CGraphics_Threaded::SetWindowScreen(int Index)
 		return false;
 	}
 
-	m_pBackend->GetViewportSize(m_ScreenWidth, m_ScreenHeight);
-	AdjustViewport(true);
-	m_ScreenHiDPIScale = m_ScreenWidth / (float)g_Config.m_GfxScreenWidth;
+	// send a got resized event so that the current canvas size is requested
+	GotResized(g_Config.m_GfxScreenWidth, g_Config.m_GfxScreenHeight, g_Config.m_GfxScreenRefreshRate);
 
 	for(auto &PropChangedListener : m_vPropChangeListeners)
 		PropChangedListener();
@@ -2966,9 +2997,9 @@ void CGraphics_Threaded::Move(int x, int y)
 	// Only handling CurScreen != m_GfxScreen doesn't work reliably
 	const int CurScreen = m_pBackend->GetWindowScreen();
 	m_pBackend->UpdateDisplayMode(CurScreen);
-	m_pBackend->GetViewportSize(m_ScreenWidth, m_ScreenHeight);
-	AdjustViewport(true);
-	m_ScreenHiDPIScale = m_ScreenWidth / (float)g_Config.m_GfxScreenWidth;
+
+	// send a got resized event so that the current canvas size is requested
+	GotResized(g_Config.m_GfxScreenWidth, g_Config.m_GfxScreenHeight, g_Config.m_GfxScreenRefreshRate);
 
 	for(auto &PropChangedListener : m_vPropChangeListeners)
 		PropChangedListener();

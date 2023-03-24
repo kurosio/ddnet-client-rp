@@ -2689,7 +2689,7 @@ void CGameContext::ConToggleTuneParam(IConsole::IResult *pResult, void *pUserDat
 		return;
 	}
 
-	float NewValue = fabs(OldValue - pResult->GetFloat(1)) < 0.0001f ? pResult->GetFloat(2) : pResult->GetFloat(1);
+	float NewValue = absolute(OldValue - pResult->GetFloat(1)) < 0.0001f ? pResult->GetFloat(2) : pResult->GetFloat(1);
 
 	pSelf->Tuning()->Set(pParamName, NewValue);
 	pSelf->Tuning()->Get(pParamName, &NewValue);
@@ -3869,27 +3869,6 @@ const char *CGameContext::NetVersion() const { return GAME_NETVERSION; }
 
 IGameServer *CreateGameServer() { return new CGameContext; }
 
-bool CGameContext::PlayerCollision()
-{
-	float Temp;
-	m_Tuning.Get("player_collision", &Temp);
-	return Temp != 0.0f;
-}
-
-bool CGameContext::PlayerHooking()
-{
-	float Temp;
-	m_Tuning.Get("player_hooking", &Temp);
-	return Temp != 0.0f;
-}
-
-float CGameContext::PlayerJetpack()
-{
-	float Temp;
-	m_Tuning.Get("player_jetpack", &Temp);
-	return Temp;
-}
-
 void CGameContext::OnSetAuthed(int ClientID, int Level)
 {
 	if(m_apPlayers[ClientID])
@@ -4367,6 +4346,11 @@ bool CGameContext::RateLimitPlayerMapVote(int ClientID)
 
 void CGameContext::OnUpdatePlayerServerInfo(char *aBuf, int BufSize, int ID)
 {
+	if(BufSize <= 0)
+		return;
+
+	aBuf[0] = '\0';
+
 	if(!m_apPlayers[ID])
 		return;
 
@@ -4416,7 +4400,7 @@ void CGameContext::OnUpdatePlayerServerInfo(char *aBuf, int BufSize, int ID)
 			if(TeeInfo.m_aUseCustomColors[i])
 			{
 				str_format(aPartBuf, sizeof(aPartBuf),
-					",color:%d",
+					",\"color\":%d",
 					TeeInfo.m_aSkinPartColors[i]);
 				str_append(aJsonSkin, aPartBuf, sizeof(aJsonSkin));
 			}

@@ -157,12 +157,12 @@ void CChat::OnConsoleInit()
 	Console()->Register("chat", "s['team'|'all'] ?r[message]", CFGFLAG_CLIENT, ConChat, this, "Enable chat with all/team mode");
 	Console()->Register("+show_chat", "", CFGFLAG_CLIENT, ConShowChat, this, "Show chat");
 	Console()->Register("echo", "r[message]", CFGFLAG_CLIENT | CFGFLAG_STORE, ConEcho, this, "Echo the text in chat window");
-	Console()->Chain("cl_chat_old", ConchainChatOld, this);
 }
 
 void CChat::OnInit()
 {
 	Reset();
+	Console()->Chain("cl_chat_old", ConchainChatOld, this);
 }
 
 bool CChat::OnInput(IInput::CEvent Event)
@@ -761,22 +761,19 @@ void CChat::AddLine(int ClientID, int Team, const char *pLine)
 		// check for highlighted name
 		if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		{
-			if(ClientID >= 0 && ClientID != m_pClient->m_aLocalIDs[0])
+			if(ClientID >= 0 && ClientID != m_pClient->m_aLocalIDs[0] && (!m_pClient->Client()->DummyConnected() || ClientID != m_pClient->m_aLocalIDs[1]))
 			{
 				// main character
-				if(LineShouldHighlight(pLine, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
-					Highlighted = true;
+				Highlighted |= LineShouldHighlight(pLine, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName);
 				// dummy
-				if(m_pClient->Client()->DummyConnected() && LineShouldHighlight(pLine, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
-					Highlighted = true;
+				Highlighted |= m_pClient->Client()->DummyConnected() && LineShouldHighlight(pLine, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName);
 			}
 		}
 		else
 		{
 			// on demo playback use local id from snap directly,
 			// since m_aLocalIDs isn't valid there
-			if(m_pClient->m_Snap.m_LocalClientID >= 0 && LineShouldHighlight(pLine, m_pClient->m_aClients[m_pClient->m_Snap.m_LocalClientID].m_aName))
-				Highlighted = true;
+			Highlighted |= m_pClient->m_Snap.m_LocalClientID >= 0 && LineShouldHighlight(pLine, m_pClient->m_aClients[m_pClient->m_Snap.m_LocalClientID].m_aName);
 		}
 
 		pCurrentLine->m_Highlighted = Highlighted;

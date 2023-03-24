@@ -18,6 +18,7 @@ CLayerTiles::CLayerTiles(int w, int h)
 	m_aName[0] = '\0';
 	m_Width = w;
 	m_Height = h;
+	m_Texture.Invalidate();
 	m_Image = -1;
 	m_Game = 0;
 	m_Color.r = 255;
@@ -910,7 +911,7 @@ int CLayerTiles::RenderProperties(CUIRect *pToolBox)
 				m_pEditor->m_PopupEventType = m_pEditor->POPEVENT_IMAGEDIV16;
 				m_pEditor->m_PopupEventActivated = true;
 
-				m_Texture = IGraphics::CTextureHandle();
+				m_Texture.Invalidate();
 				m_Image = -1;
 			}
 		}
@@ -1311,6 +1312,10 @@ bool CLayerTele::ContainsElementWithId(int Id)
 	{
 		for(int x = 0; x < m_Width; ++x)
 		{
+			if(m_pTeleTile[y * m_Width + x].m_Type == TILE_TELECHECKIN)
+				continue;
+			if(m_pTeleTile[y * m_Width + x].m_Type == TILE_TELECHECKINEVIL)
+				continue;
 			if(m_pTeleTile[y * m_Width + x].m_Number == Id)
 			{
 				return true;

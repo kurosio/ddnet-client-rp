@@ -14,9 +14,10 @@
 #define __USE_GNU
 #endif
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <time.h>
+#include <cinttypes>
+#include <cstdarg>
+#include <cstdint>
+#include <ctime>
 
 #ifdef __MINGW32__
 #undef PRId64
@@ -62,7 +63,7 @@
 void dbg_assert_imp(const char *filename, int line, int test, const char *msg);
 
 #ifdef __clang_analyzer__
-#include <assert.h>
+#include <cassert>
 #undef dbg_assert
 #define dbg_assert(test, msg) assert(test)
 #endif
@@ -1248,13 +1249,32 @@ int str_length(const char *str);
  * @param buffer Pointer to the buffer to receive the formatted string.
  * @param buffer_size Size of the buffer.
  * @param format printf formatting string.
- * @param ... Parameters for the formatting.
+ * @param args The variable argument list.
  *
- * @return Length of written string, even if it has been truncated
+ * @return Length of written string, even if it has been truncated.
  *
  * @remark See the C manual for syntax for the printf formatting string.
  * @remark The strings are treated as zero-terminated strings.
- * @remark Guarantees that dst string will contain zero-termination.
+ * @remark Guarantees that buffer string will contain zero-termination.
+ */
+int str_format_v(char *buffer, int buffer_size, const char *format, va_list args)
+	GNUC_ATTRIBUTE((format(printf, 3, 0)));
+
+/**
+ * Performs printf formatting into a buffer.
+ *
+ * @ingroup Strings
+ *
+ * @param buffer Pointer to the buffer to receive the formatted string.
+ * @param buffer_size Size of the buffer.
+ * @param format printf formatting string.
+ * @param ... Parameters for the formatting.
+ *
+ * @return Length of written string, even if it has been truncated.
+ *
+ * @remark See the C manual for syntax for the printf formatting string.
+ * @remark The strings are treated as zero-terminated strings.
+ * @remark Guarantees that buffer string will contain zero-termination.
  */
 int str_format(char *buffer, int buffer_size, const char *format, ...)
 	GNUC_ATTRIBUTE((format(printf, 3, 4)));
@@ -2123,6 +2143,14 @@ char str_uppercase(char c);
 int str_isallnum(const char *str);
 unsigned str_quickhash(const char *str);
 
+enum
+{
+	/**
+	 * The maximum bytes necessary to encode one Unicode codepoint with UTF-8.
+	 */
+	UTF8_BYTE_LENGTH = 4,
+};
+
 int str_utf8_to_skeleton(const char *str, int *buf, int buf_len);
 
 /*
@@ -2449,8 +2477,10 @@ void cmdline_free(int argc, const char **argv);
 
 #if defined(CONF_FAMILY_WINDOWS)
 typedef void *PROCESS;
+constexpr PROCESS INVALID_PROCESS = nullptr;
 #else
 typedef pid_t PROCESS;
+constexpr PROCESS INVALID_PROCESS = 0;
 #endif
 
 /*
@@ -2563,6 +2593,20 @@ int secure_rand_below(int below);
 		1 - Failure in getting the version.
 */
 int os_version_str(char *version, int length);
+
+/**
+ * Returns a string of the preferred locale of the user / operating system.
+ * The string conforms to [RFC 3066](https://www.ietf.org/rfc/rfc3066.txt)
+ * and only contains the characters `a`-`z`, `A`-`Z`, `0`-`9` and `-`.
+ * If the preferred locale could not be determined this function
+ * falls back to the locale `"en-US"`.
+ *
+ * @param locale Buffer to use for the output.
+ * @param length Length of the output buffer.
+ *
+ * @remark The destination buffer will be zero-terminated.
+ */
+void os_locale_str(char *locale, size_t length);
 
 #if defined(CONF_EXCEPTION_HANDLING)
 void init_exception_handler();

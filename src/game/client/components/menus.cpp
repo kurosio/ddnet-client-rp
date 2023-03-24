@@ -86,8 +86,7 @@ CMenus::CMenus()
 	m_DemoPlayerState = DEMOPLAYER_NONE;
 	m_Dummy = false;
 
-	m_ServerProcess.Process = 0;
-	m_ServerProcess.Initialized = false;
+	m_ServerProcess.m_Process = INVALID_PROCESS;
 
 	for(SUIAnimator &animator : m_aAnimatorsSettingsTab)
 	{
@@ -527,7 +526,7 @@ int CMenus::DoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, bool 
 					if(absolute(s_Value) > Scale)
 					{
 						int Count = (int)(s_Value / Scale);
-						s_Value = fmod(s_Value, Scale);
+						s_Value = std::fmod(s_Value, Scale);
 						Current += Step * Count;
 						Current = clamp(Current, Min, Max);
 
@@ -535,7 +534,7 @@ int CMenus::DoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, bool 
 						if(Count > 0)
 							Current = Current / Step * Step;
 						else
-							Current = round_ceil(Current / (float)Step) * Step;
+							Current = std::ceil(Current / (float)Step) * Step;
 					}
 				}
 			}
@@ -2334,6 +2333,9 @@ void CMenus::OnStateChange(int NewState, int OldState)
 	// reset active item
 	UI()->SetActiveItem(nullptr);
 
+	if(OldState == IClient::STATE_ONLINE || OldState == IClient::STATE_OFFLINE)
+		TextRender()->DeleteTextContainer(m_MotdTextContainerIndex);
+
 	if(NewState == IClient::STATE_OFFLINE)
 	{
 		if(OldState >= IClient::STATE_ONLINE && NewState < IClient::STATE_QUITTING)
@@ -2370,6 +2372,11 @@ void CMenus::OnStateChange(int NewState, int OldState)
 			SetActive(false);
 		}
 	}
+}
+
+void CMenus::OnWindowResize()
+{
+	TextRender()->DeleteTextContainer(m_MotdTextContainerIndex);
 }
 
 void CMenus::OnRender()
@@ -2539,7 +2546,7 @@ void CMenus::RenderBackground()
 	Graphics()->TextureClear();
 	Graphics()->QuadsBegin();
 	float Size = 15.0f;
-	float OffsetTime = fmod(LocalTime() * 0.15f, 2.0f);
+	float OffsetTime = std::fmod(LocalTime() * 0.15f, 2.0f);
 	for(int y = -2; y < (int)(sw / Size); y++)
 		for(int x = -2; x < (int)(sh / Size); x++)
 		{
