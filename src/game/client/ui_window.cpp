@@ -7,12 +7,13 @@
 #include <engine/shared/config.h>
 
 #include <game/localization.h>
+#include <game/generated/client_data.h>
 
 #include "render.h"
 #include "ui.h"
 
+
 constexpr float s_BackgroundMargin = 2.0f;
-constexpr float s_Rounding = 7.0f;
 constexpr float s_FontSize = 12.0f;
 constexpr float s_BordureWidth = 18.0f;
 
@@ -25,11 +26,11 @@ void CWindowUI::RenderWindowWithoutBordure()
 	// background draw
 	CUIRect Background{};
 	Workspace.Margin(-s_BackgroundMargin, &Background);
-	Background.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
+	Background.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, 0.f);
 
 	const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActive(), 0.4f);
 	const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
-	Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
+	Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, 0.f);
 
 	// render callback
 	if(m_pRenderCallback)
@@ -70,13 +71,20 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		CUIRect ShadowBackground{};
 		m_CurrentRect.Margin(-1.5f, &ShadowBackground);
-		ShadowBackground.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
+		ShadowBackground.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, 0.f);
 
 		if(!m_Minimized)
 		{
+			// texture
 			const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActiveWindow, 0.4f);
 			const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
-			Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
+			m_pUI->Graphics()->TextureSet(g_pData->m_aImages[IMAGE_CONSOLE_BG].m_Id);
+			m_pUI->Graphics()->QuadsBegin();
+			m_pUI->Graphics()->SetColor(Color);
+			m_pUI->Graphics()->QuadsSetSubset(0, Workspace.h * 0.12f, Workspace.w * 0.18f, 0);
+			const IGraphics::CQuadItem QuadItem = IGraphics::CQuadItem(Workspace.x, Workspace.y, Workspace.w, Workspace.h);
+			m_pUI->Graphics()->QuadsDrawTL(&QuadItem, 1);
+			m_pUI->Graphics()->QuadsEnd();
 		}
 	}
 
@@ -86,7 +94,7 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		const float BordureFade = m_pUI->GetFade(&m_BordureRect, IsActiveWindow);
 		const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.2f, 0.2f, 0.2f, 0.f), BordureFade);
-		m_BordureRect.DrawMonochrome(ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_ALL : IGraphics::CORNER_T | IGraphics::CORNER_IB, s_Rounding);
+		m_BordureRect.DrawMonochrome(ColorRGBA(Color), m_Minimized ? IGraphics::CORNER_NONE : IGraphics::CORNER_IBL, 8.0f);
 	}
 
 	/*
@@ -110,7 +118,7 @@ void CWindowUI::RenderDefaultWindow()
 		{
 			CUIRect Button = *(pButtonRect);
 			const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));
-			Button.DrawMonochrome(ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, s_Rounding);
+			Button.DrawMonochrome(ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, 0.f);
 			m_pUI->DoLabel(&Button, pSymbolUTF, s_FontSize, TEXTALIGN_CENTER);
 			pButtonRect->x -= 24.f;
 			if(pCounter)
