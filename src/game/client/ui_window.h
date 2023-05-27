@@ -22,15 +22,15 @@ class CWindowUI
 	inline static CWindowUI *m_pActiveWindow;
 
 	using RenderWindowCallback = std::function<void(CUIRect, CWindowUI*)>;
-	RenderWindowCallback m_pCallback{};
-	RenderWindowCallback m_pCallbackHelp{};
+	RenderWindowCallback m_pRenderCallback{};
+	RenderWindowCallback m_pRenderCallbackHelpPage{};
 
-	bool m_Openned{};
+	bool m_Open{};
 	vec4 m_ColorTone{};
 	char m_aName[128]{};
-	CUIRect m_MainRect{};
+	CUIRect m_CurrentRect{};
 	CUIRect m_BordureRect{};
-	CUIRect m_ReserveRect{};
+	CUIRect m_LastRectAfterChange{};
 	CUIRect m_DefaultRect{};
 	bool *m_pRenderDependence{};
 	CWindowUI *m_Parent{};
@@ -185,8 +185,8 @@ public:
 	*/
 	void SetDefaultWorkspace()
 	{
-		m_MainRect.w = m_DefaultRect.w;
-		m_MainRect.h = m_DefaultRect.h;
+		m_CurrentRect.w = m_DefaultRect.w;
+		m_CurrentRect.h = m_DefaultRect.h;
 	}
 
 	/*
@@ -207,7 +207,7 @@ public:
 	*/
 	void MarginWorkspace(float Width, float Height)
 	{
-		SetWorkspace({ m_MainRect.w - Width, m_MainRect.h - Height });
+		SetWorkspace({ m_CurrentRect.w - Width, m_CurrentRect.h - Height });
 		
 	}
 
@@ -229,7 +229,7 @@ private:
 	static CWindowUI* GetActiveWindow();
 	static CWindowUI *SearchWindowByKeyName(std::vector<CWindowUI *> &pVector, const char *pSearchKeyName);
 
-	bool IsRenderAllowed() const { return m_Openned && m_pCallback && (m_pRenderDependence == nullptr || (m_pRenderDependence && *m_pRenderDependence == true)); }
+	bool IsRenderAllowed() const { return m_Open && m_pRenderCallback && (m_pRenderDependence == nullptr || (m_pRenderDependence && *m_pRenderDependence == true)); }
 	bool IsMoving() const { return m_Moving; }
 };
 

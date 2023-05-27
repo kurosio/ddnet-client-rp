@@ -74,7 +74,7 @@ void CWindowController::Update(bool* pCursor) const
 {
 	// update hovered the active highlighted area
 	if(const auto pItem = std::find_if(CWindowUI::ms_aWindows.begin(), CWindowUI::ms_aWindows.end(), [this](CWindowUI *p) 
-		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_MainRect) || p->IsMoving()); }); pItem != CWindowUI::ms_aWindows.end())
+		{ return p->IsRenderAllowed() && (UI()->MouseInside(&p->m_CurrentRect) || p->IsMoving()); }); pItem != CWindowUI::ms_aWindows.end())
 		UI()->SetHoveredWindow(*pItem);
 
 	// update screen
@@ -95,7 +95,7 @@ void CWindowController::Update(bool* pCursor) const
 			// enable selection
 			if(LeftMousePressed)
 			{
-				if(const bool Hovered = UI()->MouseHovered(&pWindow->m_MainRect); CWindowUI::GetActiveWindow() != pWindow && Hovered)
+				if(const bool Hovered = UI()->MouseHovered(&pWindow->m_CurrentRect); CWindowUI::GetActiveWindow() != pWindow && Hovered)
 					CWindowUI::SetActiveWindow(pWindow);
 				else if(CWindowUI::GetActiveWindow() == pWindow && !Hovered)
 					CWindowUI::SetActiveWindow(nullptr);

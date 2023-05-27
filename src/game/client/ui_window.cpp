@@ -20,7 +20,7 @@ constexpr float s_BordureWidth = 18.0f;
 void CWindowUI::RenderWindowWithoutBordure()
 {
 	CUIRect Workspace{};
-	m_MainRect.Margin(s_BackgroundMargin, &Workspace);
+	m_CurrentRect.Margin(s_BackgroundMargin, &Workspace);
 
 	// background draw
 	CUIRect Background{};
@@ -32,9 +32,9 @@ void CWindowUI::RenderWindowWithoutBordure()
 	Workspace.Draw(ColorRGBA(Color), IGraphics::CORNER_ALL, s_Rounding);
 
 	// render callback
-	if(m_pCallback)
+	if(m_pRenderCallback)
 	{
-		m_pCallback(Workspace, this);
+		m_pRenderCallback(Workspace, this);
 	}
 }
 
@@ -47,8 +47,8 @@ void CWindowUI::RenderDefaultWindow()
 	static float s_WindowSkipMovingY;
 	if(m_Moving)
 	{
-		m_MainRect.x = m_BordureRect.x = clamp(m_pUI->MouseX() - s_WindowSkipMovingX, 0.0f, m_pUI->Screen()->w - m_MainRect.w);
-		m_MainRect.y = m_BordureRect.y = clamp(m_pUI->MouseY() - s_WindowSkipMovingY, 0.0f, m_pUI->Screen()->h - m_MainRect.h);
+		m_CurrentRect.x = m_BordureRect.x = clamp(m_pUI->MouseX() - s_WindowSkipMovingX, 0.0f, m_pUI->Screen()->w - m_CurrentRect.w);
+		m_CurrentRect.y = m_BordureRect.y = clamp(m_pUI->MouseY() - s_WindowSkipMovingY, 0.0f, m_pUI->Screen()->h - m_CurrentRect.h);
 		if(!m_pUI->Input()->KeyIsPressed(KEY_MOUSE_1))
 		{
 			m_Moving = false;
@@ -61,7 +61,7 @@ void CWindowUI::RenderDefaultWindow()
 	 * Set bordure rect
 	 */
 	CUIRect Workspace{};
-	m_MainRect.HSplitTop(s_BordureWidth, &m_BordureRect, &Workspace);
+	m_CurrentRect.HSplitTop(s_BordureWidth, &m_BordureRect, &Workspace);
 
 	/*
 	 * Background draw
@@ -69,7 +69,7 @@ void CWindowUI::RenderDefaultWindow()
 	const bool IsActiveWindow = IsActive();
 	{
 		CUIRect ShadowBackground{};
-		m_MainRect.Margin(-1.5f, &ShadowBackground);
+		m_CurrentRect.Margin(-1.5f, &ShadowBackground);
 		ShadowBackground.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, s_Rounding);
 
 		if(!m_Minimized)
@@ -92,10 +92,10 @@ void CWindowUI::RenderDefaultWindow()
 	/*
 	 * Callback func
 	 */
-	if(!m_Minimized && m_pCallback)
+	if(!m_Minimized && m_pRenderCallback)
 	{
 		Workspace.Margin(s_BackgroundMargin, &Workspace);
-		m_pCallback(Workspace, this);
+		m_pRenderCallback(Workspace, this);
 	}
 		
 	/*
@@ -151,12 +151,12 @@ void CWindowUI::RenderDefaultWindow()
 			MinimizeWindow();
 
 		// helppage button
-		if(m_pCallbackHelp)
+		if(m_pRenderCallbackHelpPage)
 		{
 			CWindowUI* pWindowHelppage = GetChild("Help");
 			if(CreateButtonTop(&ButtonsNum, &ButtonTop, "Show attached help.", pWindowHelppage->IsOpenned() ? vec4(0.1f, 0.3f, 0.1f, 0.75f) : vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.5f, 0.2f, 0.75f), "?"))
 			{
-				pWindowHelppage->Register(m_pCallbackHelp);
+				pWindowHelppage->Register(m_pRenderCallbackHelpPage);
 				pWindowHelppage->Reverse();
 			}
 		}
@@ -178,8 +178,8 @@ void CWindowUI::RenderDefaultWindow()
 	else if(m_pUI->Input()->KeyPress(KEY_MOUSE_1) && m_pUI->MouseHovered(&m_BordureRect))
 	{
 		m_Moving = true;
-		s_WindowSkipMovingX = (m_pUI->MouseX() - m_MainRect.x);
-		s_WindowSkipMovingY = (m_pUI->MouseY() - m_MainRect.y);
+		s_WindowSkipMovingX = (m_pUI->MouseX() - m_CurrentRect.x);
+		s_WindowSkipMovingY = (m_pUI->MouseY() - m_CurrentRect.y);
 	}
 }
 
@@ -195,7 +195,7 @@ void CWindowUI::Render()
 			RenderDefaultWindow();
 
 		// close window when clicking outside
-		if(m_Flags & FLAG_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_MainRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
+		if(m_Flags & FLAG_CLOSE_CLICKING_OUTSIDE && !m_pUI->MouseHovered(&m_CurrentRect) && m_pUI->Input()->KeyPress(KEY_MOUSE_1))
 			Close();
 	}
 }
@@ -253,14 +253,14 @@ void CWindowUI::MinimizeWindow()
 	m_Minimized ^= true;
 	if(m_Minimized)
 	{
-		m_ReserveRect = m_MainRect;
-		m_MainRect = m_BordureRect;
+		m_LastRectAfterChange = m_CurrentRect;
+		m_CurrentRect = m_BordureRect;
 		return;
 	}
 
-	m_ReserveRect.x = clamp(m_MainRect.x, 0.0f, m_pUI->Screen()->w - m_ReserveRect.w);
-	m_ReserveRect.y = clamp(m_MainRect.y, 0.0f, m_pUI->Screen()->h - m_ReserveRect.h);
-	m_MainRect = m_ReserveRect;
+	m_LastRectAfterChange.x = clamp(m_CurrentRect.x, 0.0f, m_pUI->Screen()->w - m_LastRectAfterChange.w);
+	m_LastRectAfterChange.y = clamp(m_CurrentRect.y, 0.0f, m_pUI->Screen()->h - m_LastRectAfterChange.h);
+	m_CurrentRect = m_LastRectAfterChange;
 }
 
 // - - -- - -- - -- - -- - -- - -- - -
@@ -268,9 +268,9 @@ void CWindowUI::MinimizeWindow()
 void CWindowUI::Init(vec2 WindowSize, bool* pRenderDependence)
 {
 	m_BordureRect = { 0, 0, 0, 0 };
-	m_MainRect = { 0, 0, WindowSize.x, WindowSize.y };
-	m_DefaultRect = m_MainRect;
-	m_ReserveRect = m_MainRect;
+	m_CurrentRect = { 0, 0, WindowSize.x, WindowSize.y };
+	m_DefaultRect = m_CurrentRect;
+	m_LastRectAfterChange = m_CurrentRect;
 	m_Minimized = false;
 	m_Moving = false;
 	if(pRenderDependence)
@@ -281,13 +281,13 @@ void CWindowUI::Init(vec2 WindowSize, bool* pRenderDependence)
 
 const CUIRect& CWindowUI::GetRect() const
 {
-	return m_MainRect;
+	return m_CurrentRect;
 }
 
 CWindowUI::CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDependence, int WindowFlags)
 {
 	m_Parent = nullptr;
-	m_Openned = false;
+	m_Open = false;
 	m_Flags = WindowFlags;
 	str_copy(m_aName, pWindowName, sizeof(m_aName));
 	Init(WindowSize, pRenderDependence);
@@ -295,12 +295,12 @@ CWindowUI::CWindowUI(const char *pWindowName, vec2 WindowSize, bool *pRenderDepe
 
 bool CWindowUI::IsOpenned() const
 {
-	return m_Openned;
+	return m_Open;
 }
 
 bool CWindowUI::IsActive() const
 {
-	return (bool)(m_Openned && GetActiveWindow() == this);
+	return (bool)(m_Open && GetActiveWindow() == this);
 }
 
 void CWindowUI::Open(float X, float Y)
@@ -308,16 +308,16 @@ void CWindowUI::Open(float X, float Y)
 	for(const auto &p : m_paChildrens)
 		p->Close();
 
-	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_ReserveRect.w, m_ReserveRect.h };
+	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_LastRectAfterChange.w, m_LastRectAfterChange.h };
 	m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
 	if(m_Flags & FLAG_POSITION_CENTER)
 	{
-		NewWindowRect.x = (m_pUI->Screen()->w / 2.0f) - (m_ReserveRect.w / 2.0f);
-		NewWindowRect.y = (m_pUI->Screen()->h / 2.0f) - (m_ReserveRect.h / 2.0f);
+		NewWindowRect.x = (m_pUI->Screen()->w / 2.0f) - (m_LastRectAfterChange.w / 2.0f);
+		NewWindowRect.y = (m_pUI->Screen()->h / 2.0f) - (m_LastRectAfterChange.h / 2.0f);
 	}
 
-	m_MainRect = NewWindowRect;
-	m_Openned = true;
+	m_CurrentRect = NewWindowRect;
+	m_Open = true;
 	m_Moving = false;
 	m_Minimized = false;
 	SetActiveWindow(this);
@@ -327,14 +327,14 @@ void CWindowUI::Close()
 {
 	if(m_pActiveWindow == this)
 		m_pActiveWindow = nullptr;
-	m_Openned = false;
+	m_Open = false;
 	for(const auto &p : m_paChildrens)
 		p->Close();
 }
 
 void CWindowUI::Reverse()
 {
-	if(m_Openned)
+	if(m_Open)
 		Close();
 	else
 		Open();
@@ -342,28 +342,28 @@ void CWindowUI::Reverse()
 
 void CWindowUI::Register(RenderWindowCallback pCallback, RenderWindowCallback pCallbackHelp)
 {
-	m_pCallback = std::move(pCallback);
+	m_pRenderCallback = std::move(pCallback);
 
 	if(pCallbackHelp)
 	{
 		AddChild("Help", {300, 200});
-		m_pCallbackHelp = std::move(pCallbackHelp);
+		m_pRenderCallbackHelpPage = std::move(pCallbackHelp);
 	}
 }
 
 void CWindowUI::SetWorkspace(vec2 WorkspaceSize)
 {
-	float Width = round_to_int(WorkspaceSize.x) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_MainRect.w : WorkspaceSize.x;
-	float Height = round_to_int(WorkspaceSize.y) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_MainRect.h : WorkspaceSize.y;
+	float Width = round_to_int(WorkspaceSize.x) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_CurrentRect.w : WorkspaceSize.x;
+	float Height = round_to_int(WorkspaceSize.y) == round_to_int(DEFAULT_WORKSPACE_SIZE) ? m_CurrentRect.h : WorkspaceSize.y;
 
 	CUIRect NewWindowRect = {0, 0, Width, Height};
-	if(round_to_int(NewWindowRect.w) != round_to_int(m_MainRect.w) || round_to_int(NewWindowRect.h) != round_to_int(m_MainRect.h))
+	if(round_to_int(NewWindowRect.w) != round_to_int(m_CurrentRect.w) || round_to_int(NewWindowRect.h) != round_to_int(m_CurrentRect.h))
 	{
 		m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
-		m_MainRect.w = NewWindowRect.w;
-		m_MainRect.h = NewWindowRect.h;
-		m_ReserveRect.w = NewWindowRect.w;
-		m_ReserveRect.h = NewWindowRect.h;
+		m_CurrentRect.w = NewWindowRect.w;
+		m_CurrentRect.h = NewWindowRect.h;
+		m_LastRectAfterChange.w = NewWindowRect.w;
+		m_LastRectAfterChange.h = NewWindowRect.h;
 	}
 }
 
