@@ -31,14 +31,12 @@ CWindowController::~CWindowController()
 void CWindowController::OnRender()
 {
 	// update
-	bool ShowCursor = false;
-	Update(&ShowCursor);
+	bool RenderCursor = false;
+	Update(&RenderCursor);
 
 	// render cursor
-	if(ShowCursor)
-	{
+	if(RenderCursor)
 		RenderTools()->RenderCursor(vec2(UI()->MouseX(), UI()->MouseY()), 24.f);
-	}
 
 	// finish all checks buttons logics
 	UI()->FinishCheck();
@@ -117,7 +115,6 @@ void CWindowController::Update(bool* pCursor) const
 /* =====================================================================
  * Window UI Elements                                           |     UI
  * ===================================================================== */
-static float s_InformationBoxLabelSpace = 8.0f;
 template<class T, std::enable_if_t<std::is_convertible_v<T *, BaseElemUI *>, bool> = true>
 static void UpdateElement(std::vector<BaseElemUI *> &paElements, T *pElement)
 {
@@ -140,13 +137,14 @@ static void UpdateElement(std::vector<BaseElemUI *> &paElements, T *pElement)
  * Information	Box                                             |     UI
  * ===================================================================== */
 constexpr float s_MessageBoxFontSize = 10.0f;
+static float s_InformationBoxLabelSpace = 8.0f;
 MessageElemUI *CWindowController::CreateInformationBoxElement(const char *pMessage) const
 {
 	const CUIRect *pScreen = UI()->Screen();
 	Graphics()->MapScreen(pScreen->x, pScreen->y, pScreen->w, pScreen->h);
 
 	const auto pElement = new MessageElemUI;
-	str_copy(pElement->m_aMessageText, pMessage);
+	str_copy(pElement->m_aText, pMessage);
 	return pElement;
 }
 
@@ -182,7 +180,7 @@ void CWindowController::CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pC
 	CUIRect Label{}, ButtonOk{};
 	MainView.Margin(s_InformationBoxLabelSpace, &Label);
 	Label.HSplitBottom(18.0f, &Label, &ButtonOk);
-	TextRender()->Text(Label.x, Label.y, s_MessageBoxFontSize, pElemPopup->m_aMessageText, MainView.w);
+	TextRender()->Text(Label.x, Label.y, s_MessageBoxFontSize, pElemPopup->m_aText, MainView.w);
 
 	ButtonOk.w = MainView.w / 2.f;
 	ButtonOk.x = MainView.x + ButtonOk.w / 2.f;
@@ -201,8 +199,8 @@ PopupElemUI *CWindowController::CreatePopupElement(const char *pMessage, PopupWi
 	Graphics()->MapScreen(pScreen->x, pScreen->y, pScreen->w, pScreen->h);
 
 	const auto pElement = new PopupElemUI;
-	str_copy(pElement->m_aTextPopup, pMessage);
-	pElement->m_pCallback = std::move(Callback);
+	str_copy(pElement->m_aText, pMessage);
+	pElement->m_pRenderCallback = std::move(Callback);
 	return pElement;
 }
 
@@ -236,23 +234,23 @@ void CWindowController::CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *p
 											{ return (p->m_pWindow == pCurrentWindow); }));
 
 	CUIRect Label{}, ButtonAccept{}, ButtonDeny{}, Buttons{};
-	const int TextLines = TextRender()->TextLineCount(s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
+	const int TextLines = TextRender()->TextLineCount(s_PopupFontSize, pElemPopup->m_aText, MainView.w);
 	MainView.Margin(s_InformationBoxLabelSpace, &MainView);
 	MainView.HSplitTop(static_cast<float>(TextLines) * s_PopupFontSize, &Label, &MainView);
 	MainView.HSplitBottom(18.0f, &MainView, &Buttons);
 	MainView.HMargin(3.0f, &MainView);
-	TextRender()->Text(Label.x, Label.y, s_PopupFontSize, pElemPopup->m_aTextPopup, MainView.w);
+	TextRender()->Text(Label.x, Label.y, s_PopupFontSize, pElemPopup->m_aText, MainView.w);
 
 	// buttons yes and no
 	Buttons.VSplitLeft(MainView.w / 2.f, &ButtonDeny, &ButtonAccept);
-	PopupState State = PopupState::RENDER;
+	PopupEvent State = PopupEvent::RENDER;
 	ButtonAccept.VMargin(5.0f, &ButtonAccept);
 	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonYes.get(), "Yes", 0, &ButtonAccept))
-		State = PopupState::YES;
+		State = PopupEvent::YES;
 
 	ButtonDeny.VMargin(5.0f, &ButtonDeny);
 	if(m_pClient->m_Menus.DoButton_Menu(pElemPopup->m_pButtonNo.get(), "No", 0, &ButtonDeny))
-		State = PopupState::NO;
+		State = PopupEvent::NO;
 
-	pElemPopup->m_pCallback(MainView, pCurrentWindow, State);
+	pElemPopup->m_pRenderCallback(MainView, pCurrentWindow, State);
 }

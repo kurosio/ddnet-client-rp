@@ -2488,20 +2488,20 @@ void CMenus::OnRender()
 			if(m_pClient->m_Menus.DoButton_Menu(&s_ButtonAccept, "Open popup binary child", 0, &Button)){
 				// create popup message after clicked DoButtonMenu and update children
 				m_pClient->m_Windows.CreatePopupBox(CWindowUI::FLAG_DEFAULT_CENTER, "P1", 200, 0, "Test popup window how child binary window.", 
-					[this](CUIRect, CWindowUI *pPopupWin1, PopupState PState1) 
+					[this](CUIRect, CWindowUI *pPopupWin1, PopupEvent PState1) 
 					{
-						if(PState1 == PopupState::YES){
+						if(PState1 == PopupEvent::YES){
 							// create information box after clicked Button Yes from popup and update children
 							m_pClient->m_Windows.CreateInformationBox("PYES", 200.0f, "Information box fo sakodkoas kdoas kdoask doask odfaskfo askf oaskfo askfoas kfosak fosakf oaskf oaskfo askf osadkjgiofdnmas jgoisdangio sandgiosdnagi osdanmiog\bnfsafsafsar some BUTTON-YES ", pPopupWin1);
 						}
-						else if(PState1 == PopupState::NO){
+						else if(PState1 == PopupEvent::NO){
 							// close for button NO
 							m_pClient->m_Windows.CreatePopupBox(
-								CWindowUI::FLAG_DEFAULT, "PNO", 360, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin2, PopupState PState2) {
-									if(PState2 == PopupState::YES){
+								CWindowUI::FLAG_DEFAULT, "PNO", 360, 0, "Child child child window", [this](CUIRect, class CWindowUI *pPopupWin2, PopupEvent PState2) {
+									if(PState2 == PopupEvent::YES){
 										m_pClient->m_Windows.CreateInformationBox("About button", 400.0f, "BUTTON-YES", pPopupWin2);
 									}
-									else if(PState2 == PopupState::NO){
+									else if(PState2 == PopupEvent::NO){
 										m_pClient->m_Windows.CreateInformationBox("About button", 400.0f, "BUTTON-NO", pPopupWin2);
 									}
 								}, pPopupWin1);

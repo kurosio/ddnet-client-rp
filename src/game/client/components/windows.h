@@ -16,8 +16,8 @@ struct BaseElemUI
 };
 
 // popup
-enum class PopupState : int { RENDER, YES, NO };
-using PopupWindowCallback = std::function<void(CUIRect MainView, class CWindowUI *, PopupState)>;
+enum class PopupEvent : int { RENDER, YES, NO };
+using PopupWindowCallback = std::function<void(CUIRect MainView, class CWindowUI *, PopupEvent)>;
 struct PopupElemUI : BaseElemUI
 {
 	PopupElemUI()
@@ -26,8 +26,8 @@ struct PopupElemUI : BaseElemUI
 		m_pButtonNo = std::make_shared<CButtonContainer>();
 	}
 
-	char m_aTextPopup[1024]{};
-	PopupWindowCallback m_pCallback{};
+	char m_aText[1024]{};
+	PopupWindowCallback m_pRenderCallback{};
 	std::shared_ptr<CButtonContainer> m_pButtonYes{};
 	std::shared_ptr<CButtonContainer> m_pButtonNo{};
 };
@@ -40,7 +40,7 @@ struct MessageElemUI : BaseElemUI
 		m_pButtonOk = std::make_shared<CButtonContainer>();
 	}
 
-	char m_aMessageText[2048]{};
+	char m_aText[2048]{};
 	std::shared_ptr<CButtonContainer> m_pButtonOk{};
 };
 
@@ -52,6 +52,7 @@ class CWindowController : public CComponent
 {
 	PopupElemUI *CreatePopupElement(const char *pMessage, PopupWindowCallback Callback) const;
 	MessageElemUI *CreateInformationBoxElement(const char *pMessage) const;
+
 	void CallbackRenderGuiPopupBox(CUIRect MainView, CWindowUI *pCurrentWindow);
 	void CallbackRenderInfoWindow(CUIRect MainView, CWindowUI *pCurrentWindow);
 
