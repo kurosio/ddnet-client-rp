@@ -103,8 +103,11 @@ void CWindowUI::RenderDefaultWindow()
 	 */
 	bool DissalowWindowMoving = false;
 	{
+		enum class ButtonStateEventL { DEFAULT, CLICKED, HOVERED };
+
 		// Lambda Bordure buttons function
-		auto CreateButtonTop = [&](int *pCounter, CUIRect *pButtonRect, const char *pHintStr, vec4 ColorFade1, vec4 ColorFade2, const char *pSymbolUTF) -> bool {
+		auto CreateButtonTop = [&](int *pCounter, CUIRect *pButtonRect, const char *pHintStr, vec4 ColorFade1, vec4 ColorFade2, const char *pSymbolUTF) -> ButtonStateEventL
+		{
 			CUIRect Button = *(pButtonRect);
 			const vec4 ColorFinal = mix(ColorFade1, ColorFade2, m_pUI->GetFade(&Button, false));
 			Button.DrawMonochrome(ColorRGBA(ColorFinal), IGraphics::CORNER_ALL, s_Rounding);
@@ -113,7 +116,7 @@ void CWindowUI::RenderDefaultWindow()
 			if(pCounter)
 				*pCounter += 1;
 
-			bool Active = false;
+			auto StateEvent = ButtonStateEventL::DEFAULT;
 			if(IsActiveWindow && m_pUI->MouseHovered(&Button))
 			{
 				constexpr float FontSizeHint = 8.0f;
@@ -128,13 +131,16 @@ void CWindowUI::RenderDefaultWindow()
 				LabelKeyInfo.Margin(s_BackgroundMargin, &LabelKeyInfo);
 				m_pUI->DoLabel(&LabelKeyInfo, HotKeyLabel, FontSizeHint, TEXTALIGN_CENTER);
 
-				Active = m_pUI->Input()->KeyPress(KEY_MOUSE_1);
+				if(m_pUI->Input()->KeyPress(KEY_MOUSE_1))
+					StateEvent = ButtonStateEventL::CLICKED;
+				else
+					StateEvent = ButtonStateEventL::HOVERED;
 			}
 
-			if(Active)
+			if(StateEvent == ButtonStateEventL::CLICKED)
 				DissalowWindowMoving = true;
 
-			return Active;
+			return StateEvent;
 		};
 
 		// Bordure top
@@ -143,12 +149,20 @@ void CWindowUI::RenderDefaultWindow()
 		m_BordureRect.VSplitRight(24.0f, nullptr, &ButtonTop);
 
 		// close button
-		if(m_Flags & FLAG_CLOSE && CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95"))  
-			Close();
+		if(m_Flags & FLAG_CLOSE)
+		{
+			ButtonStateEventL Event = CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + Q - close.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.7f, 0.1f, 0.1f, 0.75f), "\xE2\x9C\x95");
+			if(Event == ButtonStateEventL::CLICKED)
+				Close();
+		}
 
 		// minimize button
-		if(m_Flags & FLAG_MINIMIZE && CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
-			MinimizeWindow();
+		if(m_Flags & FLAG_MINIMIZE)
+		{
+			ButtonStateEventL Event = CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb");
+			if(Event == ButtonStateEventL::CLICKED)
+				MinimizeWindow();
+		}
 
 		// Window name
 		CUIRect Label{};
