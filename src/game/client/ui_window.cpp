@@ -71,13 +71,13 @@ void CWindowUI::RenderDefaultWindow()
 	{
 		CUIRect ShadowBackground{};
 		m_CurrentRect.Margin(-1.5f, &ShadowBackground);
-		ShadowBackground.DrawMonochrome(m_ColorTone / 1.5f, IGraphics::CORNER_ALL, 0.f);
+		ShadowBackground.DrawMonochrome(vec4(0.f,0.f,0.f,0.35f), IGraphics::CORNER_ALL, 0.f);
 
 		if(!m_Minimized)
 		{
 			// texture
 			const float BackgroundFade = m_pUI->GetFade(&Workspace, IsActiveWindow, 0.4f);
-			const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.02f, 0.02f, 0.02f, 0.f), BackgroundFade);
+			const vec4 Color = mix(m_ColorTone, m_ColorTone + vec4(0.12f, 0.12f, 0.12f, 1.f), BackgroundFade);
 			m_pUI->Graphics()->TextureSet(g_pData->m_aImages[IMAGE_CONSOLE_BG].m_Id);
 			m_pUI->Graphics()->QuadsBegin();
 			m_pUI->Graphics()->SetColor(Color);
