@@ -150,17 +150,6 @@ void CWindowUI::RenderDefaultWindow()
 		if(m_Flags & FLAG_MINIMIZE && CreateButtonTop(&ButtonsNum, &ButtonTop, "Left Ctrl + M - minimize.", vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.2f, 0.7f, 0.75f), m_Minimized ? "\xe2\x81\x82" : "\xe2\x80\xbb"))
 			MinimizeWindow();
 
-		// helppage button
-		if(m_pRenderCallbackHelpPage)
-		{
-			CWindowUI* pWindowHelppage = GetChild("Help");
-			if(CreateButtonTop(&ButtonsNum, &ButtonTop, "Show attached help.", pWindowHelppage->IsOpenned() ? vec4(0.1f, 0.3f, 0.1f, 0.75f) : vec4(0.f, 0.f, 0.f, 0.25f), vec4(0.2f, 0.5f, 0.2f, 0.75f), "?"))
-			{
-				pWindowHelppage->Register(m_pRenderCallbackHelpPage);
-				pWindowHelppage->Reverse();
-			}
-		}
-
 		// Window name
 		CUIRect Label{};
 		m_BordureRect.VSplitRight(ButtonTop.w * static_cast<float>(ButtonsNum), &Label, 0);
@@ -303,12 +292,12 @@ bool CWindowUI::IsActive() const
 	return (bool)(m_Open && GetActiveWindow() == this);
 }
 
-void CWindowUI::Open(float X, float Y)
+void CWindowUI::Open(float PosX, float PosY)
 {
 	for(const auto &p : m_paChildrens)
 		p->Close();
 
-	CUIRect NewWindowRect = {X <= 0.f ? m_pUI->MouseX() : X, Y <= 0.f ? m_pUI->MouseY() : Y, m_LastRectAfterChange.w, m_LastRectAfterChange.h };
+	CUIRect NewWindowRect = {PosX <= 0.f ? m_pUI->MouseX() : PosX, PosY <= 0.f ? m_pUI->MouseY() : PosY, m_LastRectAfterChange.w, m_LastRectAfterChange.h };
 	m_pUI->RectLimitMapScreen(&NewWindowRect, 6.0f, CUI::RECTLIMITSCREEN_UP | CUI::RECTLIMITSCREEN_ALIGN_CENTER_X);
 	if(m_Flags & FLAG_POSITION_CENTER)
 	{
@@ -340,15 +329,9 @@ void CWindowUI::Reverse()
 		Open();
 }
 
-void CWindowUI::Register(RenderWindowCallback pCallback, RenderWindowCallback pCallbackHelp)
+void CWindowUI::Register(RenderWindowCallback pCallback)
 {
 	m_pRenderCallback = std::move(pCallback);
-
-	if(pCallbackHelp)
-	{
-		AddChild("Help", {300, 200});
-		m_pRenderCallbackHelpPage = std::move(pCallbackHelp);
-	}
 }
 
 void CWindowUI::SetWorkspace(vec2 WorkspaceSize)

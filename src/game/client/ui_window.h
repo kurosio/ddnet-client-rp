@@ -23,7 +23,6 @@ class CWindowUI
 
 	using RenderWindowCallback = std::function<void(CUIRect, CWindowUI*)>;
 	RenderWindowCallback m_pRenderCallback{};
-	RenderWindowCallback m_pRenderCallbackHelpPage{};
 
 	bool m_Open{};
 	vec4 m_ColorTone{};
@@ -134,7 +133,7 @@ public:
 		Remarks:
 			- If window already openned, it will be reopened.
 	*/
-	void Open(float X = 0.f, float Y = 0.f);
+	void Open(float PosX = 0.f, float PosY = 0.f);
 	void Open(vec2 Position) { Open(Position.x, Position.y); }
 
 	/*
@@ -173,11 +172,10 @@ public:
 			- Registers the callback function for render.
 		Parameters:
 			- pCallback - Callback function.
-			- pCallbackHelp - Callback helppage function.
 		Remarks:
 			- WINREGISTER(function ref, object) is used to register the callback function.
 	*/
-	void Register(RenderWindowCallback pCallback, RenderWindowCallback pCallbackHelp = nullptr);
+	void Register(RenderWindowCallback pCallback);
 
 	/*
 		Function: SetDefaultWorkspace -> void
